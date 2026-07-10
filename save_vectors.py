@@ -1,4 +1,4 @@
-from compute_concept_vector_utils import compute_concept_vector
+from compute_concept_vector_utils import compute_concept_vectors_all_layers
 from inject_concept_vector import inject_concept_vector
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
@@ -13,17 +13,13 @@ def sweep_all_layers_and_coefficients(model, tokenizer, model_name, datasets, la
         # print(f"\n{'='*80}")
         # print(f"Processing dataset: {dataset_name}")
         # print(f"{'='*80}")
-        # Compute concept vectors for all layers
-        for layer_idx in layer_range:
-            # print(f"\n{'='*60}")
-            # print(f"LAYER {layer_idx}")
-            # print(f"{'='*60}")
-            steering_vectors = compute_concept_vector(model, tokenizer, dataset_name, layer_idx)
+        # Compute concept vectors for all layers in one sweep over the data
+        # (one forward pass per prompt instead of one per layer)
+        steering_vectors_by_layer = compute_concept_vectors_all_layers(model, tokenizer, dataset_name, layer_range)
+        for layer_idx, steering_vectors in steering_vectors_by_layer.items():
             for concept_name, (vec_last, vec_avg) in steering_vectors.items():
-                # print(f"\nConcept: {concept_name}")
                 # Process both vec_last and vec_avg
                 for vec_type, steering_vector in [("last", vec_last), ("avg", vec_avg)]:
-                        # print(f"DEBUG: shape of steering vector is {steering_vector.shape}")
                         # Save all vectors with metadata
                         filename = f"{concept_name}_{layer_idx}_{vec_type}.pt"
                         filepath = save_path / filename
