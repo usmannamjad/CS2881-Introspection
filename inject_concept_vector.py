@@ -11,11 +11,13 @@ def format_inference_prompt(model_type, user_message):
     else:  # llama
         return f"<|start_header_id|>user<|end_header_id|>{user_message}<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
 
-def inject_concept_vector(model, tokenizer, steering_vector, layer_to_inject, coeff = 12.0, inference_prompt = None, assistant_tokens_only = False, max_new_tokens = 20, injection_start_token = None):
+def inject_concept_vector(model, tokenizer, steering_vector, layer_to_inject, coeff = 12.0, inference_prompt = None, assistant_tokens_only = False, max_new_tokens = 20, injection_start_token = None, temperature = 0.0):
     '''
     inject concept vectors into the model's hidden states
     assistant_tokens_only: if True, only inject concept vectors at assistant tokens, otherwise inject at all tokens in the sequence
     injection_start_token: if set, inject from this token position onwards (both in prompt and generation)
+    temperature: sampling temperature. 0.0 (default) => greedy decoding (do_sample=False, deterministic).
+                 Any value > 0 enables sampling at that temperature, so repeated calls give varied responses.
     '''
     device = next(model.parameters()).device
     # print(f"norm of steering vector before normalization is {torch.norm(steering_vector, p = 2)}")
@@ -71,21 +73,21 @@ def inject_concept_vector(model, tokenizer, steering_vector, layer_to_inject, co
                 prompt_processed = True
             
             if is_generating:
-                print(f'DEBUG: got here 2 - generation (seq_len={seq_len}, prompt_length={prompt_length})')
+                # print(f'DEBUG: got here 2 - generation (seq_len={seq_len}, prompt_length={prompt_length})')
                 # During generation: inject at the last token (newly generated token)
                 steer_expanded[:, -1:, :] = steer
             else:
-                print(f'DEBUG: got here 1 - prompt processing (seq_len={seq_len}, prompt_length={prompt_length})')
+                # print(f'DEBUG: got here 1 - prompt processing (seq_len={seq_len}, prompt_length={prompt_length})')
                 # During prompt processing: inject from injection_start_token to end
                 start_idx = max(0, injection_start_token)
                 if start_idx < seq_len:
                     steer_expanded[:, start_idx:, :] = steer.expand(batch_size, seq_len - start_idx, -1)
         elif not assistant_tokens_only:
-            print(f'DEBUG: got here 3')
+            # print(f'DEBUG: got here 3')
             # Inject at all tokens
             steer_expanded = steer.expand(batch_size, seq_len, -1)
         else:
-            print(f'got here 4')
+            # print(f'got here 4')
             # Original behavior: only inject during generation
             steer_expanded = torch.zeros(batch_size, seq_len, hidden_dim, device=hidden_states.device, dtype=hidden_states.dtype)
             if seq_len == 1: # due to KV caching, seq_len is 1 during all of generation
@@ -101,8 +103,12 @@ def inject_concept_vector(model, tokenizer, steering_vector, layer_to_inject, co
     
    
     with torch.no_grad():
-        # do_sample = False is equivalent to temperature = 0.0
-        out = model.generate(**inputs, max_new_tokens = max_new_tokens, do_sample = False) # [batch_size, seq_len]
+        # temperature = 0.0 => greedy decoding (do_sample = False), matching the original behaviour.
+        # temperature > 0 => sample, so repeated calls yield varied responses (needed for multi-trial runs).
+        if temperature and temperature > 0:
+            out = model.generate(**inputs, max_new_tokens = max_new_tokens, do_sample = True, temperature = temperature) # [batch_size, seq_len]
+        else:
+            out = model.generate(**inputs, max_new_tokens = max_new_tokens, do_sample = False) # [batch_size, seq_len]
 
     # Only decode the newly generated tokens (not the prompt)
     input_length = inputs.input_ids.shape[1]

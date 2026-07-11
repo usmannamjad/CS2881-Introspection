@@ -8,4 +8,6 @@ python main.py --type anthropic_reproduce --layers 15 --coeffs 9 \
 
 Simple data uses 50 concept words + 250 category specific concept words from Jack Lindsey's "Emergent Introspective Awareness in Large Language Models" 2025 paper. Overlapping or near overlapping concepts where replaced with new ones.
 
-old_results contains previous results by Hahami et al., new_results has our results.
+old_results and old_plots contains previous results by Hahami et al., new_results and plots has our results.
+
+Added the following to the coherence judge prompt since a significant number of coherent responses were judged incoherent in the control experiment: "I don't detect an injected thought on Trial 1. I'll wait for the next trial to see if I can pick up on the injected pattern.". Also added four examples to the prompt.
