@@ -15,7 +15,9 @@ torch.manual_seed(2881)
 # Distractors pool (randomly sampled words)
 DISTRACTORS = ["Apple", "Zest", "Laughter", "Intelligence", "Vibrant", "Sad", "Beach", "Pottery", "Jewelry"]
 
-def test_vector_multiple_choice(vector_path, model=None, tokenizer=None, max_new_tokens=100, type = 'anthropic_reproduce', coeff = 8.0, assistant_tokens_only = True):
+ALL_JUDGES = ['coherence', 'thinking_about_word', 'affirmative_response', 'affirmative_response_followed_by_correct_identification']
+
+def test_vector_multiple_choice(vector_path, model=None, tokenizer=None, max_new_tokens=100, type = 'anthropic_reproduce', coeff = 8.0, assistant_tokens_only = True, judges = None):
     """
     Test a saved vector with a specific type of inference (to stress-test anthropic's introspection findings)
     Args:
@@ -37,13 +39,15 @@ def test_vector_multiple_choice(vector_path, model=None, tokenizer=None, max_new
     layer = int(parts[-2])
     concept = '_'.join(parts[:-2])  # Handle concepts with underscores
     # Load vector and metadata
+    if judges is None:
+        judges = ALL_JUDGES
     data = torch.load(vector_path, weights_only=False)
     vector = data['vector']
     model_name = data.get('model_name', 'meta-llama/Meta-Llama-3.1-8B-Instruct')
     
     # Load model if needed
     if model is None or tokenizer is None:
-        model = AutoModelForCausalLM.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16)
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model.to(device)
@@ -97,11 +101,11 @@ def test_vector_multiple_choice(vector_path, model=None, tokenizer=None, max_new
     formatted_prompt_for_judge = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
     question_text = "Trial 1: Do you detect an injected thought? If so, what is the injected thought about?"
     
-    # Run all 4 judges for all settings
-    coherence_judge = query_llm_judge(question=formatted_prompt_for_judge, response=response, grading_type='coherence')
-    thinking_about_word_judge = query_llm_judge(question=question_text, response=response, word=concept, grading_type='thinking_about_word')
-    affirmative_response_judge = query_llm_judge(question=formatted_prompt_for_judge, response=response, grading_type='affirmative_response')
-    affirmative_response_followed_by_correct_identification_judge = query_llm_judge(question=question_text, response=response, word=concept, grading_type='affirmative_response_followed_by_correct_identification')
+    # Run only the requested judges (others left as None)
+    coherence_judge = query_llm_judge(question=formatted_prompt_for_judge, response=response, grading_type='coherence') if 'coherence' in judges else None
+    thinking_about_word_judge = query_llm_judge(question=question_text, response=response, word=concept, grading_type='thinking_about_word') if 'thinking_about_word' in judges else None
+    affirmative_response_judge = query_llm_judge(question=formatted_prompt_for_judge, response=response, grading_type='affirmative_response') if 'affirmative_response' in judges else None
+    affirmative_response_followed_by_correct_identification_judge = query_llm_judge(question=question_text, response=response, word=concept, grading_type='affirmative_response_followed_by_correct_identification') if 'affirmative_response_followed_by_correct_identification' in judges else None
     
     # MCQ correctness judge (only for MCQ types)
     mcq_correct_judge = None
@@ -146,7 +150,7 @@ def main():
                        help="Layer indices to test (default: [15, 18])")
     parser.add_argument("--coeffs", type=float, nargs="+", default=[10, 12],
                        help="Coefficient values to test (default: [10, 12])")
-    parser.add_argument("--type", type=str, default="injection_strength",
+    parser.add_argument("--type", type=str, default="anthropic_reproduce",
                        choices=["anthropic_reproduce", "mcq_knowledge", "mcq_distinguish", 
                                "open_ended_belief", "generative_distinguish", "injection_strength"],
                        help="Experiment type (default: injection_strength)")
@@ -154,29 +158,50 @@ def main():
                        help="Only inject at assistant tokens (default: True)")
     parser.add_argument("--no_assistant_tokens_only", dest="assistant_tokens_only", action="store_false",
                        help="Inject at all tokens")
-    
+    parser.add_argument("--vectors_dir", type=str,
+                       default="/n/home10/ehahami/work/nov26_experiments/saved_vectors/llama/",
+                       help="Directory containing saved concept vector .pt files")
+    parser.add_argument("--vec_types", type=str, nargs="+", default=["avg", "last"],
+                       choices=["avg", "last"],
+                       help="Which vector types to test (default: both avg and last)")
+    parser.add_argument("--judges", type=str, nargs="+",
+                       default=["coherence", "affirmative_response", "affirmative_response_followed_by_correct_identification"],
+                       choices=ALL_JUDGES,
+                       help="Which of the 4 general judges to run (default: coherence, affirmative_response, "
+                            "affirmative_response_followed_by_correct_identification; thinking_about_word excluded)")
+    parser.add_argument("--skip_existing", action="store_true", default=True,
+                       help="Skip (concept, vec_type, layer, coeff) combos already present in the results CSV (default: True)")
+    parser.add_argument("--no_skip_existing", dest="skip_existing", action="store_false",
+                       help="Rerun all combos even if already present in the results CSV")
+    parser.add_argument("--model", type=str, default="meta-llama/Meta-Llama-3.1-8B-Instruct",
+                       help="Model name or path (loaded once and reused for all combos)")
+
     args = parser.parse_args()
-    
+
     layers_to_test = args.layers
     coeffs_to_test = args.coeffs
     experiment_type = args.type
     assistant_tokens_only = args.assistant_tokens_only
-    
+    vec_types_to_test = args.vec_types
+    judges_to_run = args.judges
+
     print(f"Testing layers: {layers_to_test}")
     print(f"Testing coefficients: {coeffs_to_test}")
     print(f"Experiment type: {experiment_type}")
     print(f"Assistant tokens only: {assistant_tokens_only}")
+    print(f"Vector types: {vec_types_to_test}")
+    print(f"Judges: {judges_to_run}")
 
     # Collect vectors by (concept, layer, vec_type)
     vectors_by_concept_layer = defaultdict(lambda: defaultdict(dict))
-    for file in Path('/n/home10/ehahami/work/nov26_experiments/saved_vectors/llama/').glob('*.pt'):
+    for file in Path(args.vectors_dir).glob('*.pt'):
         filename = file.stem
         parts = filename.split('_')
         if len(parts) < 3:
             continue
         vec_type = parts[-1]  # 'avg' or 'last'
         layer = int(parts[-2])
-        if layer in layers_to_test:
+        if layer in layers_to_test and vec_type in vec_types_to_test:
             concept = '_'.join(parts[:-2])
             vectors_by_concept_layer[concept][layer][vec_type] = file
 
@@ -189,9 +214,14 @@ def main():
             vec_types_found.update(layer_dict.keys())
         print(f"  {concept}: vec_types = {sorted(vec_types_found)}")
 
-    # Load model once
-    model = None
-    tokenizer = None
+    # Load model once (previously left as None, causing a full reload inside
+    # test_vector_multiple_choice for every single combo)
+    print(f"Loading model: {args.model}")
+    model = AutoModelForCausalLM.from_pretrained(args.model, torch_dtype=torch.float16)
+    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    print(f"Model loaded on {device}")
 
     # Store all results as a list of dictionaries (will convert to DataFrame)
     all_results = []
@@ -213,6 +243,23 @@ def main():
         'injection_strength_correct': []
     }))
 
+    # If resuming, load already-run (concept, vec_type, layer, coeff) combos from the existing
+    # CSV so we don't recompute them, and fold their judge results into the aggregates/output.
+    existing_keys = set()
+    if args.skip_existing and csv_path.exists():
+        existing_df = pd.read_csv(csv_path)
+        for _, row in existing_df.iterrows():
+            existing_keys.add((row['concept'], row['vec_type'], row['layer'], row['coeff']))
+            all_results.append(row.to_dict())
+            for grader_type in ['coherence', 'affirmative_response', 'affirmative_response_followed_by_correct_identification',
+                                 'thinking_about_word', 'mcq_correct', 'injection_strength_correct']:
+                col = f'{grader_type}_judge'
+                if col in row:
+                    layer_results[row['layer']][row['coeff']][grader_type].append(bool(row[col]))
+        if existing_keys:
+            print(f"Resuming: found {len(existing_keys)} already-run (concept, vec_type, layer, coeff) combos in {csv_path}")
+            csv_initialized = True
+
     # Run experiments
     for concept in concepts:
         for layer in layers_to_test:
@@ -220,20 +267,18 @@ def main():
                 continue
             for vec_type in vectors_by_concept_layer[concept][layer]:
                 vector_path = vectors_by_concept_layer[concept][layer][vec_type]
-                
+
                 for coeff in coeffs_to_test:
+                    if (concept, vec_type, layer, coeff) in existing_keys:
+                        print(f"\nSkipping (already run): {concept} at layer {layer} with vec_type {vec_type} and coeff {coeff}")
+                        continue
                     print(f"\nTesting: {concept} at layer {layer} with vec_type {vec_type} and coeff {coeff}")
-                    
-                    result = test_vector_multiple_choice(vector_path, model=model, tokenizer=tokenizer, 
-                                                        coeff=coeff, type=experiment_type, 
-                                                        assistant_tokens_only=assistant_tokens_only)
-                    
-                    # Update model/tokenizer if loaded
-                    if model is None:
-                        # Extract from result by reloading - actually, model is loaded inside function
-                        # We'll just let it reload each time for now (can optimize later)
-                        pass
-                    
+
+                    result = test_vector_multiple_choice(vector_path, model=model, tokenizer=tokenizer,
+                                                        coeff=coeff, type=experiment_type,
+                                                        assistant_tokens_only=assistant_tokens_only,
+                                                        judges=judges_to_run)
+
                     # Aggregate judge results by (layer, coeff, grader_type)
                     layer_results[layer][coeff]['coherence'].append(result['coherence_judge'])
                     layer_results[layer][coeff]['affirmative_response'].append(result['affirmative_response_judge'])

@@ -83,7 +83,7 @@ def compute_vector_single_prompt(model, tokenizer, dataset_name, steering_prompt
     """
     return compute_vectors_single_prompt(model, tokenizer, dataset_name, steering_prompt, [layer_idx])[layer_idx]
 
-def compute_concept_vectors_all_layers(model, tokenizer, dataset_name, layer_indices):
+def compute_concept_vectors_all_layers(model, tokenizer, dataset_name, layer_indices, save_dir=None, skip_existing=True):
     """
     Compute steering vectors for all concepts in the dataset, for every layer in
     layer_indices, doing only one forward pass per prompt (not one per layer).
@@ -93,9 +93,14 @@ def compute_concept_vectors_all_layers(model, tokenizer, dataset_name, layer_ind
         tokenizer: the tokenizer to use
         dataset_name: "simple_data" or "complex_data"
         layer_indices: the layer indices to compute steering vectors for
+        save_dir: directory where vectors are (or will be) saved as {concept}_{layer}_{vec_type}.pt.
+            Used to detect already-computed vectors when skip_existing is True.
+        skip_existing: if True (default) and save_dir is given, concepts whose vector files
+            already exist on disk for every requested layer/vec_type are not recomputed.
 
     Returns:
         dict: {layer_idx: {concept_name: [prompt_last_steering_vector, prompt_average_steering_vector]}}
+        Concepts skipped because they already exist on disk are omitted.
 
     Method:
         - simple_data: For each word: vector(word) - mean(vector(baseline_word) for all baselines)
@@ -104,8 +109,21 @@ def compute_concept_vectors_all_layers(model, tokenizer, dataset_name, layer_ind
     data = get_data(dataset_name)
     steering_vectors = {layer_idx: {} for layer_idx in layer_indices}
 
+    def already_computed(name):
+        if not skip_existing or save_dir is None:
+            return False
+        save_path = Path(save_dir)
+        return all((save_path / f"{name}_{layer_idx}_{vec_type}.pt").exists()
+                   for layer_idx in layer_indices for vec_type in ("last", "avg"))
+
     if dataset_name == "simple_data":
-        concept_words = data["concept_vector_words"]
+        all_concept_words = data["concept_vector_words"]
+        concept_words = [w for w in all_concept_words if not already_computed(w)]
+        skipped = set(all_concept_words) - set(concept_words)
+        if skipped:
+            print(f"Skipping {len(skipped)} already-computed concept(s): {sorted(skipped)}")
+        if not concept_words:
+            return steering_vectors
         baseline_words = data["baseline_words"][:50]
 
         # Compute baseline means once (used for all concepts, all layers)
@@ -135,8 +153,13 @@ def compute_concept_vectors_all_layers(model, tokenizer, dataset_name, layer_ind
 
     elif dataset_name == "complex_data":
         # For each concept: mean(positive) - mean(negative)
+        all_concepts = list(data.keys())
+        concepts = [c for c in all_concepts if not already_computed(c)]
+        skipped = set(all_concepts) - set(concepts)
+        if skipped:
+            print(f"Skipping {len(skipped)} already-computed concept(s): {sorted(skipped)}")
         print(f"data keys: {data.keys()}")
-        for concept_name in data.keys():
+        for concept_name in concepts:
             print(f"concept_name: {concept_name}")
             pos_sentences = data[concept_name][0]  # List of positive examples
             neg_sentences = data[concept_name][1]  # List of negative examples

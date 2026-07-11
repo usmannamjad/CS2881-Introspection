@@ -22,8 +22,8 @@ ENV/
 # Data and results (large files)
 # new_results/*.csv
 # new_results/*.parquet
-old_results/*.csv
-old_results/*.parquet
+#old_results/*.csv
+#old_results/*.parquet
 
 # Saved vectors (large binary files)
 saved_vectors/**/*.pt
