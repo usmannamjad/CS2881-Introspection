@@ -83,7 +83,8 @@ def compute_vector_single_prompt(model, tokenizer, dataset_name, steering_prompt
     """
     return compute_vectors_single_prompt(model, tokenizer, dataset_name, steering_prompt, [layer_idx])[layer_idx]
 
-def compute_concept_vectors_all_layers(model, tokenizer, dataset_name, layer_indices, save_dir=None, skip_existing=True):
+def compute_concept_vectors_all_layers(model, tokenizer, dataset_name, layer_indices, save_dir=None, skip_existing=True,
+                                        word_keys=None):
     """
     Compute steering vectors for all concepts in the dataset, for every layer in
     layer_indices, doing only one forward pass per prompt (not one per layer).
@@ -97,6 +98,10 @@ def compute_concept_vectors_all_layers(model, tokenizer, dataset_name, layer_ind
             Used to detect already-computed vectors when skip_existing is True.
         skip_existing: if True (default) and save_dir is given, concepts whose vector files
             already exist on disk for every requested layer/vec_type are not recomputed.
+        word_keys: simple_data only -- which word lists of the json to compute vectors for
+            (e.g. ["concept_vector_words", "famous_people"]). Defaults to
+            ["concept_vector_words"], the original behavior. baseline_words is always the
+            baseline pool regardless of this argument.
 
     Returns:
         dict: {layer_idx: {concept_name: [prompt_last_steering_vector, prompt_average_steering_vector]}}
@@ -117,7 +122,9 @@ def compute_concept_vectors_all_layers(model, tokenizer, dataset_name, layer_ind
                    for layer_idx in layer_indices for vec_type in ("last", "avg"))
 
     if dataset_name == "simple_data":
-        all_concept_words = data["concept_vector_words"]
+        if word_keys is None:
+            word_keys = ["concept_vector_words"]
+        all_concept_words = [w for key in word_keys for w in data[key]]
         concept_words = [w for w in all_concept_words if not already_computed(w)]
         skipped = set(all_concept_words) - set(concept_words)
         if skipped:
