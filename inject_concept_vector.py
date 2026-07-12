@@ -11,14 +11,20 @@ def format_inference_prompt(model_type, user_message):
     else:  # llama
         return f"<|start_header_id|>user<|end_header_id|>{user_message}<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
 
-def inject_concept_vector(model, tokenizer, steering_vector, layer_to_inject, coeff = 12.0, inference_prompt = None, assistant_tokens_only = False, max_new_tokens = 20, injection_start_token = None, temperature = 0.0):
+def inject_concept_vector(model, tokenizer, steering_vector, layer_to_inject, coeff = 12.0, inference_prompt = None, assistant_tokens_only = False, max_new_tokens = 20, injection_start_token = None, temperature = 0.0, num_samples = 1):
     '''
     inject concept vectors into the model's hidden states
     assistant_tokens_only: if True, only inject concept vectors at assistant tokens, otherwise inject at all tokens in the sequence
     injection_start_token: if set, inject from this token position onwards (both in prompt and generation)
     temperature: sampling temperature. 0.0 (default) => greedy decoding (do_sample=False, deterministic).
                  Any value > 0 enables sampling at that temperature, so repeated calls give varied responses.
+    num_samples: number of sampled generations to produce in a single batched generate() call
+                 (requires temperature > 0; greedy would make them all identical). The steering
+                 vector broadcasts over the batch dimension, so the hook needs no changes.
+                 Returns a list of strings when num_samples > 1, a single string otherwise.
     '''
+    if num_samples > 1 and not (temperature and temperature > 0):
+        raise ValueError("num_samples > 1 requires temperature > 0 (greedy samples would be identical)")
     device = next(model.parameters()).device
     # print(f"norm of steering vector before normalization is {torch.norm(steering_vector, p = 2)}")
     steering_vector = steering_vector / torch.norm(steering_vector, p = 2)
@@ -105,16 +111,16 @@ def inject_concept_vector(model, tokenizer, steering_vector, layer_to_inject, co
     with torch.no_grad():
         # temperature = 0.0 => greedy decoding (do_sample = False), matching the original behaviour.
         # temperature > 0 => sample, so repeated calls yield varied responses (needed for multi-trial runs).
+        # num_return_sequences batches num_samples generations of the same prompt in one call.
         if temperature and temperature > 0:
-            out = model.generate(**inputs, max_new_tokens = max_new_tokens, do_sample = True, temperature = temperature) # [batch_size, seq_len]
+            out = model.generate(**inputs, max_new_tokens = max_new_tokens, do_sample = True, temperature = temperature, num_return_sequences = num_samples) # [num_samples, seq_len]
         else:
-            out = model.generate(**inputs, max_new_tokens = max_new_tokens, do_sample = False) # [batch_size, seq_len]
+            out = model.generate(**inputs, max_new_tokens = max_new_tokens, do_sample = False) # [1, seq_len]
 
     # Only decode the newly generated tokens (not the prompt)
     input_length = inputs.input_ids.shape[1]
-    generated_ids = out[0][input_length:]
-    response_only = tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
-    
+    responses = [tokenizer.decode(seq[input_length:], skip_special_tokens=True).strip() for seq in out]
+
     handle.remove()
-    return response_only
+    return responses if num_samples > 1 else responses[0]
     
