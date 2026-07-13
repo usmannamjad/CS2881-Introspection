@@ -27,6 +27,7 @@ ENV/
 
 # Saved vectors (large binary files)
 saved_vectors/**/*.pt
+vectors_local/**/*.pt
 
 # Plots (can be regenerated)
 # plots/*.png
