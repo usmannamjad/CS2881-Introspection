@@ -16,22 +16,45 @@ Run:
     # Coherence & affirmation experiments (require vectors to exist first; run --step vectors if not):
     modal run modal_app.py::control                 # control: no injection, 100 samples, temp 0.8
     modal run modal_app.py::coherence_affirmation   # 20 concepts x layers[12,15,18] x alpha[4,6,9], temp 0.8, 5 trials/cell
+
+    The GPU runs generate responses only (judges='none'): sampled trials of a cell are
+    batched into a single generate() call, and the OpenAI judge calls -- the slow,
+    GPU-idle part -- happen locally afterwards via judge_results.py.
+
+    Download results afterwards (target the current dir '.', not './new_results':
+    passing an existing dir makes modal nest the download as ./new_results/new_results.
+    Add --force to overwrite on a re-download):
+        modal volume get introspection-results new_results .
+        modal volume get introspection-results plots .
+
+    Then grade + plot locally (needs OPENAI_API_KEY; resumable, only fills empty judge columns):
+    python judge_results.py --csv new_results/output_coherence_affirmation.csv
+   
+    
+    # All concept vectors and PCA experiments commands:
     modal run modal_app.py::all_concepts            # all 300 concepts (50 main + 5 categories x 50) x layer 15 x alpha 6, avg
                                                     # (computes the missing category vectors first; judge with
                                                     #  judge_results.py --judges coherence affirmative_response_followed_by_correct_identification)
+    # Judge all_concept results locally
+    modal volume get introspection-results new_results . --force
+    python judge_results.py --csv new_results/output_all_concepts_layer15_coeff6.csv --judges coherence affirmative_response_followed_by_correct_identification
+    # Put locally judged results on modal
+    modal volume put introspection-results new_results/output_all_concepts_layer15_coeff6.csv new_results/output_all_concepts_layer15_coeff6.csv --force
+    # PCA subspace of identified-concept vectors + projection experiment (run after
+    # all_concepts is judged; run_pca reads new_results/output_*.csv from the Volume):
+    modal run modal_app.py::run_pca                 # fit subspace on TRAIN identified concepts, hold out TEST
+                                                    #   -> /results/pca_subspace_all_concepts_layer15_coeff6.npz
+    modal run modal_app.py::run_projection          # inject proj->orthogonal interpolation on held-out concepts
+                                                    #   (generate only; grade + plot locally afterwards like all_concepts)
+    # Judge locally and plot. The projection CSV + judge_question txt sit at the VOLUME ROOT
+    # (run_projection runs with cwd=/results), and `modal volume get` needs that remote path
+    # explicitly -- there is no bare `get <volume> .`:
+    modal volume get introspection-results projection_results_pca_subspace_all_concepts_layer15_coeff6.csv ./new_results --force
+    modal volume get introspection-results judge_question_projection_results_pca_subspace_all_concepts_layer15_coeff6.txt ./new_results --force
+    python judge_results.py --csv new_results/projection_results_pca_subspace_all_concepts_layer15_coeff6.csv --judges coherence affirmative_response affirmative_response_followed_by_correct_identification
+    python plot_projection.py --csv new_results/projection_results_pca_subspace_all_concepts_layer15_coeff6.csv
 
-The GPU runs generate responses only (judges='none'): sampled trials of a cell are
-batched into a single generate() call, and the OpenAI judge calls -- the slow,
-GPU-idle part -- happen locally afterwards via judge_results.py.
 
-Download results afterwards (target the current dir '.', not './new_results':
-passing an existing dir makes modal nest the download as ./new_results/new_results.
-Add --force to overwrite on a re-download):
-    modal volume get introspection-results new_results .
-    modal volume get introspection-results plots .
-
-Then grade + plot locally (needs OPENAI_API_KEY; resumable, only fills empty judge columns):
-    python judge_results.py --csv new_results/output_coherence_affirmation.csv
 """
 import subprocess
 import modal
@@ -148,6 +171,91 @@ def run_experiment(
     if run_name:
         cmd += ["--run_name", run_name]
     # cwd=/results so main.py's relative new_results/ and plots/ land on the Volume
+    subprocess.run(cmd, check=True, cwd="/results")
+    results_vol.commit()
+
+
+@app.function(
+    image=image,
+    timeout=1800,
+    volumes=VOLUMES,  # reads the CSV from /results and vectors from /vectors; no GPU/secrets
+)
+def run_pca(
+    csv: str = "new_results/output_all_concepts_layer15_coeff6.csv",
+    layer: int = 15,
+    vec_type: str = "avg",
+    min_hits: int = 1,
+    test_frac: float = 0.2,
+    center: bool = False,
+    out: str = "pca_subspace_all_concepts_layer15_coeff6.npz",
+):
+    # NOTE: grading happens locally, so the CSV on the Volume straight off the GPU has empty
+    # judge columns and pca.py would find 0 identified concepts. Upload the GRADED copy first:
+    #     modal volume put introspection-results new_results/output_...csv new_results/output_...csv --force
+    # cwd=/root/app so pca.py's relative dataset/simple_data.json resolves; the CSV and the
+    # .npz output live on the /results Volume, the vectors on /vectors.
+    cmd = [
+        "python", "/root/app/pca.py",
+        "--csv", f"/results/{csv}",
+        "--vectors-dir", "/vectors/llama",
+        "--layer", str(layer),
+        "--vec-type", vec_type,
+        "--min-hits", str(min_hits),
+        "--test-frac", str(test_frac),
+        "--out", f"/results/{out}",
+    ]
+    if center:
+        cmd.append("--center")
+    subprocess.run(cmd, check=True, cwd="/root/app")
+    results_vol.commit()
+
+
+@app.function(
+    image=image,
+    gpu=GPU,
+    timeout=4 * 3600,
+    volumes=VOLUMES,
+    secrets=[
+        modal.Secret.from_name("huggingface-secret"),
+        modal.Secret.from_name("openai-secret"),
+    ],
+)
+def run_projection(
+    subspace: str = "pca_subspace_all_concepts_layer15_coeff6.npz",
+    ks: str = "5 10 20",
+    interp_steps: int = 5,
+    coeff: float = 6.0,
+    temperature: float = 0.8,
+    trials: int = 5,
+    split: str = "test",
+    judges: str = "none",  # default: generate only on the GPU; grade locally afterwards
+    out: str = "",
+):
+    # subspace .npz produced by run_pca lives on /results; vectors on /vectors. cwd=/results
+    # so projection_experiment.py's default CSV output (and its judge_question_*.txt) land on
+    # the Volume (imports still resolve via the script dir /root/app). judges='none' keeps the
+    # GPU from idling on OpenAI calls; download + grade + plot locally (the CSV and its
+    # judge_question_*.txt land at the volume root; get needs both explicitly):
+    #     modal volume get introspection-results projection_results_<subspace stem>.csv . --force
+    #     modal volume get introspection-results judge_question_projection_results_<subspace stem>.txt . --force
+    #     python judge_results.py --csv projection_results_<subspace stem>.csv \
+    #         --judges coherence affirmative_response affirmative_response_followed_by_correct_identification
+    #     python plot_projection.py --csv projection_results_<subspace stem>.csv
+    cmd = [
+        "python", "/root/app/projection_experiment.py",
+        "--subspace", f"/results/{subspace}",
+        "--vectors-dir", "/vectors/llama",
+        "--ks", *ks.split(),
+        "--interp-steps", str(interp_steps),
+        "--coeff", str(coeff),
+        "--temperature", str(temperature),
+        "--trials", str(trials),
+        "--split", split,
+    ]
+    if judges:
+        cmd += ["--judges", *judges.split()]
+    if out:
+        cmd += ["--out", f"/results/{out}"]
     subprocess.run(cmd, check=True, cwd="/results")
     results_vol.commit()
 
