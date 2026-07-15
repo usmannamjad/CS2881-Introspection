@@ -23,6 +23,17 @@ mix's changing magnitude is irrelevant -- alpha only rotates the injected direct
 proj toward residual. Reuses main.test_vector_multiple_choice unchanged by writing each
 variant to a temp {concept}_{layer}_{vec_type}.pt file.
 
+--random control: same sweep, but each held-out concept's vector is replaced by a random
+Gaussian direction norm-matched to it (both are unit-normed here and the injection
+re-normalizes anyway, so the match holds by construction). 'full' is then the base random
+detection rate, proj_k a random direction INSIDE the top-k subspace, residual_k a random
+direction ORTHOGONAL to it. If detection tracks the subspace for concept vectors but not
+for random ones, the subspace carries concept-specific signal rather than "any direction
+in the subspace trips the detector". Rows keep the paired concept's name, so the
+identification judge measures false identification of that concept (expected ~ control
+rate); results land in projection_results_<subspace stem>_random.csv, never overwriting
+the concept-vector run.
+
 Like the other GPU steps, this GENERATES ONLY by default (--judges none): no OpenAI calls
 run on the GPU. It writes projection_results_<subspace stem>.csv (judge columns empty) plus
 the judge_question_<...>.txt the graders need, so grading happens locally afterwards -- the
@@ -142,6 +153,15 @@ def main():
     parser.add_argument("--temperature", type=float, default=0.8,
                         help="Sampling temperature (matches the original run's 0.8)")
     parser.add_argument("--trials", type=int, default=10, help="Generations per (concept, variant)")
+    parser.add_argument("--random", action="store_true",
+                        help="Random-direction control: replace each concept's vector with a "
+                             "random Gaussian direction norm-matched to it. 'full' = base "
+                             "random rate, proj_k / residual_k = the random direction "
+                             "projected into / out of the subspace. Output gets a _random "
+                             "suffix so it never overwrites the concept-vector run.")
+    parser.add_argument("--random-seed", type=int, default=0,
+                        help="Seed for the random directions (each concept gets its own "
+                             "substream, so reruns re-inject identical directions)")
     parser.add_argument("--model", type=str, default="meta-llama/Meta-Llama-3.1-8B-Instruct")
     parser.add_argument("--judges", type=str, nargs="+", default=["none"],
                         help="Judges to run INLINE. Default 'none' = generate only (no OpenAI "
@@ -170,7 +190,8 @@ def main():
     else:
         names = list(d["test_names"])
     print(f"Injecting {len(names)} {args.split} concept(s) at layer {layer}, coeff {args.coeff}, "
-          f"vec_type {vec_type}; ks={ks}")
+          f"vec_type {vec_type}; ks={ks}"
+          + (f" [RANDOM directions, seed {args.random_seed}]" if args.random else ""))
 
     # 2. Load the model once and reuse across every injection.
     print(f"Loading {args.model} ...")
@@ -188,7 +209,7 @@ def main():
     rows = []
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
-        for concept in names:
+        for concept_i, concept in enumerate(names):
             fp = vectors_dir / f"{concept}_{layer}_{vec_type}.pt"
             if not fp.exists():
                 print(f"  missing vector, skipped: {concept}")
@@ -200,6 +221,13 @@ def main():
             if n == 0:
                 continue
             v = v / n                        # same L2-norm the injector applies
+            if args.random:
+                # Random direction norm-matched to the concept's vector: both sit at unit
+                # norm here (and injection re-normalizes), so matching holds by
+                # construction. Per-concept substream => reruns inject the same direction.
+                rng = np.random.default_rng([args.random_seed, concept_i])
+                v = rng.standard_normal(v.shape[0]).astype(np.float32)
+                v /= np.linalg.norm(v)
 
             for variant, vec, k, alpha in build_variants(v, mean, components, ks, args.interp_steps):
                 # Reuse test_vector_multiple_choice unchanged: it reads {'vector'} from a
@@ -219,10 +247,15 @@ def main():
                     r["alpha"] = alpha
                     r["trial"] = trial_i
                     r["temperature"] = args.temperature   # for judge_results.py plot compat
+                    # 'random' rows still carry the paired concept's name (norm match +
+                    # false-identification control); this column tells them apart.
+                    r["vector_source"] = "random" if args.random else "concept"
                     rows.append(r)
 
     df = pd.DataFrame(rows)
-    out = Path(args.out) if args.out else Path(f"projection_results_{Path(args.subspace).stem}.csv")
+    default_out = f"projection_results_{Path(args.subspace).stem}" \
+                  + ("_random" if args.random else "") + ".csv"
+    out = Path(args.out) if args.out else Path(default_out)
     df.to_csv(out, index=False)
     print(f"\nSaved {len(df)} rows to {out}")
 

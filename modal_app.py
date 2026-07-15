@@ -46,6 +46,18 @@ Run:
                                                     #   -> /results/pca_subspace_all_concepts_layer15_coeff6.npz
     modal run modal_app.py::run_projection          # inject proj->orthogonal interpolation on held-out concepts
                                                     #   (generate only; grade + plot locally afterwards like all_concepts)
+    modal run modal_app.py::run_projection --random-vectors
+                                                    # control: random directions norm-matched to the held-out concept
+                                                    #   vectors -- base random detection rate ('full') plus the same
+                                                    #   proj->orthogonal sweep of each random direction
+                                                    #   -> projection_results_<subspace stem>_random.csv (grade + plot
+                                                    #   locally the same way; identification of the paired concept is
+                                                    #   then a false-positive control)
+    # Centered (conventional) PCA variant: every downstream default derives its name from the
+    # .npz stem, so the _centered suffix propagates and never overwrites the uncentered files:
+    modal run modal_app.py::run_pca --center        #   -> /results/pca_subspace_all_concepts_layer15_coeff6_centered.npz
+    modal run modal_app.py::run_projection --subspace pca_subspace_all_concepts_layer15_coeff6_centered.npz
+                                                    #   -> projection_results_pca_subspace_..._centered.csv
     # Judge locally and plot. The projection CSV + judge_question txt sit at the VOLUME ROOT
     # (run_projection runs with cwd=/results), and `modal volume get` needs that remote path
     # explicitly -- there is no bare `get <volume> .`:
@@ -187,13 +199,19 @@ def run_pca(
     min_hits: int = 1,
     test_frac: float = 0.2,
     center: bool = False,
-    out: str = "pca_subspace_all_concepts_layer15_coeff6.npz",
+    out: str = "",
 ):
     # NOTE: grading happens locally, so the CSV on the Volume straight off the GPU has empty
     # judge columns and pca.py would find 0 identified concepts. Upload the GRADED copy first:
     #     modal volume put introspection-results new_results/output_...csv new_results/output_...csv --force
     # cwd=/root/app so pca.py's relative dataset/simple_data.json resolves; the CSV and the
     # .npz output live on the /results Volume, the vectors on /vectors.
+    # Default output name mirrors pca.py's: derived from the CSV, with a _centered suffix
+    # for center=True fits so they never overwrite the uncentered .npz on the Volume.
+    if not out:
+        from pathlib import Path
+        run = Path(csv).stem.removeprefix("output_") + ("_centered" if center else "")
+        out = f"pca_subspace_{run}.npz"
     cmd = [
         "python", "/root/app/pca.py",
         "--csv", f"/results/{csv}",
@@ -222,13 +240,15 @@ def run_pca(
 )
 def run_projection(
     subspace: str = "pca_subspace_all_concepts_layer15_coeff6.npz",
-    ks: str = "5 10 20",
+    ks: str = "1 2 5 10 20",
     interp_steps: int = 5,
     coeff: float = 6.0,
     temperature: float = 0.8,
     trials: int = 5,
     split: str = "test",
     judges: str = "none",  # default: generate only on the GPU; grade locally afterwards
+    random_vectors: bool = False,  # random-direction control (see projection_experiment.py --random)
+    random_seed: int = 0,
     out: str = "",
 ):
     # subspace .npz produced by run_pca lives on /results; vectors on /vectors. cwd=/results
@@ -252,6 +272,11 @@ def run_projection(
         "--trials", str(trials),
         "--split", split,
     ]
+    if random_vectors:
+        # Random directions norm-matched to the held-out concepts: 'full' = base random
+        # rate, proj_k / residual_k = random direction inside / orthogonal to the
+        # subspace. Output gets a _random suffix, so the concept run is never overwritten.
+        cmd += ["--random", "--random-seed", str(random_seed)]
     if judges:
         cmd += ["--judges", *judges.split()]
     if out:

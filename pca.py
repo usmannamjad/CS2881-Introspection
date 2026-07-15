@@ -162,7 +162,8 @@ def main():
                         help="Fraction of each category held out for later validation")
     parser.add_argument("--center", action="store_true",
                         help="Mean-center before SVD (conventional PCA). Default: uncentered "
-                             "subspace through the origin, matching direction injection.")
+                             "subspace through the origin, matching direction injection. "
+                             "Adds a _centered suffix to the default --out.")
     parser.add_argument("--seed", type=int, default=0, help="Split RNG seed")
     parser.add_argument("--out", type=str, default=None,
                         help="Output .npz (default: pca_subspace_<csv stem>.npz)")
@@ -230,6 +231,8 @@ def main():
 
     # 6. Save everything the projection experiment needs.
     run = Path(args.csv).stem.removeprefix("output_")
+    if args.center:
+        run += "_centered"   # keep centered fits from overwriting the uncentered outputs
     out_path = Path(args.out) if args.out else Path(f"pca_subspace_{run}.npz")
     np.savez(
         out_path,
