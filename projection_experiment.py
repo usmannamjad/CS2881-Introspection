@@ -62,6 +62,7 @@ Locally end-to-end (needs a GPU for generation, OPENAI_API_KEY for the grading s
 """
 import argparse
 import tempfile
+from math import atan2, degrees
 from pathlib import Path
 
 import numpy as np
@@ -109,17 +110,18 @@ def build_variants(v, mean, components, ks, interp_steps, normalize=True):
 
     full = normalize_vec(v)
     if full is not None:
-        out.append(("full", full, None, float("nan")))
+        out.append(("full", full, None, float("nan"), float("nan")))
 
     alphas = np.linspace(0.0, 1.0, interp_steps + 2)
 
     for k in ks:
+        P = components[:k]
         proj = project(v, mean, components, k)
         residual = v - proj
 
         for a in alphas:
-            vec = (1.0 - a) * proj + a * residual
-            vec = normalize_vec(vec)
+            raw = (1.0 - a) * proj + a * residual
+            vec = normalize_vec(raw)
 
             if vec is None:
                 continue
@@ -131,7 +133,13 @@ def build_variants(v, mean, components, ks, interp_steps, normalize=True):
             else:
                 name = f"interp_{k}_a{int(round(a * 100)):02d}"
 
-            out.append((name, vec, k, float(a)))
+            # Exact angle (degrees) between the injected direction and span(P), for the
+            # angle-axis plot. Normalization only rescales, so compute it from the raw
+            # mix; matches plot_projection.subspace_angles' convention.
+            w_in = (raw @ P.T) @ P
+            angle = degrees(atan2(np.linalg.norm(raw - w_in), np.linalg.norm(w_in)))
+
+            out.append((name, vec, k, float(a), angle))
 
     return out
 
@@ -229,7 +237,7 @@ def main():
                 v = rng.standard_normal(v.shape[0]).astype(np.float32)
                 v /= np.linalg.norm(v)
 
-            for variant, vec, k, alpha in build_variants(v, mean, components, ks, args.interp_steps):
+            for variant, vec, k, alpha, angle in build_variants(v, mean, components, ks, args.interp_steps):
                 # Reuse test_vector_multiple_choice unchanged: it reads {'vector'} from a
                 # file and parses concept/layer/vec_type from the filename, so keep that name.
                 tmp_fp = tmp / f"{concept}_{layer}_{vec_type}.pt"
@@ -245,6 +253,7 @@ def main():
                     r["variant"] = variant
                     r["k"] = k
                     r["alpha"] = alpha
+                    r["angle"] = angle       # degrees to the top-k subspace (NaN for 'full')
                     r["trial"] = trial_i
                     r["temperature"] = args.temperature   # for judge_results.py plot compat
                     # 'random' rows still carry the paired concept's name (norm match +

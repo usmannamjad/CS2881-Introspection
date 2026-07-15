@@ -15,11 +15,13 @@ alpha is NOT linear in angle: proj and residual have different norms, so equal a
 sweep unequal angles. Injection re-normalizes every variant, but normalization only
 rescales a vector -- it never rotates it -- so the angle between the injected direction
 and the subspace is well defined: theta = atan2(alpha*||residual||, (1-alpha)*||proj||),
-running 0 deg (inside the subspace) -> 90 deg (orthogonal). When the subspace .npz and the
-vector files are available (defaults match pca.py / projection_experiment.py) a second
-figure is written with that angle on the x-axis: each concept's per-(k, alpha) rate is a
-small dot at that concept's exact angle (||proj|| differs per concept, so the same alpha
-lands at different angles), with the mean-over-concepts curve drawn on top.
+running 0 deg (inside the subspace) -> 90 deg (orthogonal). A second figure is written
+with that angle on the x-axis: each curve point sits at the mean over concepts of that
+concept's exact angle (||proj|| differs per concept, so the same alpha lands at different
+angles). Newer CSVs carry the angle in an
+'angle' column (written by projection_experiment.py; the only correct source for --random
+runs); for older CSVs it is recomputed from the subspace .npz + vector files when those
+are available (defaults match pca.py / projection_experiment.py).
 
     python plot_projection.py --csv projection_results_pca_subspace_all_concepts_layer15_coeff6.csv
 
@@ -154,7 +156,6 @@ def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label):
                 angle_of = {(c, a): deg
                             for c, a, deg in zip(ka["concept"], ka["alpha"], ka["angle"])}
             xs, means, errs = [], [], []
-            dot_x, dot_y = [], []
             for a in alphas:
                 sel = (df["k"] == k) & (df["alpha"] == a)
                 r = rate[sel].dropna()
@@ -163,23 +164,18 @@ def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label):
                 if angle_of is None:
                     x = a
                 else:
-                    # One dot per concept at its exact angle; the curve point sits at the
-                    # mean of those angles.
-                    per_concept = r.groupby(df.loc[r.index, "concept"]).mean()
-                    pts = [(angle_of[(c, a)], m) for c, m in per_concept.items()
-                           if (c, a) in angle_of]
-                    if not pts:
+                    # Curve point sits at the mean over concepts of each concept's exact
+                    # angle (||proj|| differs per concept, so the same alpha lands at
+                    # different angles).
+                    angles = [angle_of[(c, a)] for c in df.loc[r.index, "concept"].unique()
+                              if (c, a) in angle_of]
+                    if not angles:
                         continue
-                    dot_x += [p[0] for p in pts]
-                    dot_y += [p[1] for p in pts]
-                    x = float(np.mean([p[0] for p in pts]))
+                    x = float(np.mean(angles))
                 p, n = r.mean(), len(r)
                 xs.append(x)
                 means.append(p)
                 errs.append((p * (1 - p) / n) ** 0.5)   # binomial standard error
-            if dot_x:
-                ax.scatter(dot_x, dot_y, s=14, color=color, alpha=0.35, linewidths=0,
-                           zorder=2.5)
             if xs:
                 ax.errorbar(xs, means, yerr=errs, marker="o", markersize=7, linewidth=2,
                             capsize=3, color=color, label=f"k={k}", zorder=3)
@@ -208,11 +204,6 @@ def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label):
     for row in axes:
         row[0].set_ylabel("Rate (mean over concepts x trials)", fontsize=11)
     fig.suptitle(f"Projection sweep: {run_label}  (n_full={full_n} trials)", fontsize=13)
-    if angle_df is not None:
-        fig.text(0.005, 0.002,
-                 "dots: single concepts (rate over that concept's trials) at their exact "
-                 "angle; curve: mean over concepts at each alpha step",
-                 fontsize=9, color=BASELINE_COLOR)
     fig.tight_layout(rect=(0, 0.01, 1, 0.97))
 
     out_path.parent.mkdir(exist_ok=True)
@@ -263,11 +254,16 @@ def main():
     draw_figure(df, judges, ks, alphas, None, out_path, run_label)
 
     # Angle-axis version: same curves, x = actual degrees between direction and subspace.
-    # Not applicable to --random runs: the .pt files on disk are the CONCEPT vectors, not
-    # the random directions that were injected, so recomputed angles would be wrong.
-    if "vector_source" in df.columns and (df["vector_source"] == "random").any():
-        print("Random-direction run: skipping the angle-axis figure (vector files hold the "
-              "concept vectors, not the injected random directions).")
+    # Newer CSVs store the exact per-row angle, so no subspace/.pt files are needed -- and
+    # it is the only correct source for --random runs, whose injected directions aren't on
+    # disk (the .pt files hold the CONCEPT vectors, so recomputing would give wrong angles).
+    if "angle" in df.columns and df["angle"].notna().any():
+        angle_df = (df.loc[df["variant"] != "full", ["concept", "k", "alpha", "angle"]]
+                    .dropna(subset=["angle"]).drop_duplicates())
+    elif "vector_source" in df.columns and (df["vector_source"] == "random").any():
+        print("Random-direction run without a stored angle column: skipping the angle-axis "
+              "figure (vector files hold the concept vectors, not the injected random "
+              "directions).")
         angle_df = None
     else:
         if args.subspace:
@@ -280,7 +276,12 @@ def main():
         angle_df = subspace_angles(df, subspace_path, args.vectors_dir, ks, alphas)
         if angle_df is None:
             print(f"No subspace/vectors found ({subspace_path}); skipping the angle-axis figure. "
-                  f"Pass --subspace/--vectors-dir to enable it.")
+                  f"This CSV predates the stored 'angle' column, so the subspace .npz and the "
+                  f".pt vector files are needed to recompute angles. If the fit ran on Modal, "
+                  f"download them first:\n"
+                  f"    modal volume get introspection-results {subspace_path.name} . --force\n"
+                  f"    modal volume get introspection-vectors llama ./vectors_local --force\n"
+                  f"or pass --subspace/--vectors-dir explicitly.")
     if angle_df is not None:
         draw_figure(df, judges, ks, alphas, angle_df,
                     out_path.with_stem(out_path.stem + "_angle"), run_label)
