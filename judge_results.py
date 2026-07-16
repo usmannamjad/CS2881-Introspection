@@ -20,6 +20,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import pandas as pd
 
 from api_utils import query_llm_judge
@@ -50,16 +51,29 @@ def to_rate(series):
     return series.map({True: 1.0, False: 0.0, 'True': 1.0, 'False': 0.0, 1.0: 1.0, 0.0: 0.0})
 
 
+# Okabe-Ito, colorblind-safe, assigned to coeff in fixed order (never cycled); matches
+# plot_projection.py's convention. Identity is also carried by the legend, never color alone.
+COEFF_COLORS = ['#0072B2', '#E69F00', '#009E73', '#D55E00', '#CC79A7', '#56B4E9']
+# One (linestyle, marker, label) per judge, so a judge looks the same at every coeff:
+# detection solid, coherence dashed. Marker shape doubles the linestyle cue.
+JUDGE_STYLES = {
+    'affirmative_response': ('-', 'o', 'detected (affirmative)'),
+    'coherence': ('--', 's', 'coherent'),
+    'affirmative_response_followed_by_correct_identification': ('-.', '^', 'correctly identified'),
+    'thinking_about_word': (':', 'D', 'thinking about word'),
+}
+
+
 def make_plot(df, judges, run_label, plots_dir=Path('plots')):
     layers = sorted(df['layer'].unique())
     coeffs = sorted(df['coeff'].unique())
-    markers = ['o', 's', '^', 'D']
-    linestyles = ['-', '--', '-.', ':']
 
-    plt.figure(figsize=(14, 8))
+    fig, ax = plt.subplots(figsize=(10, 6.5))
     per_cell_n = 0
-    for coeff in coeffs:
-        for idx, judge in enumerate(judges):
+    for ci, coeff in enumerate(coeffs):
+        color = COEFF_COLORS[ci % len(COEFF_COLORS)]
+        for judge in judges:
+            linestyle, marker, _ = JUDGE_STYLES.get(judge, ('-', 'o', judge))
             rates = to_rate(df[df['coeff'] == coeff][f'{judge}_judge'])
             grouped = rates.groupby(df['layer']).agg(['mean', 'count'])
             grouped = grouped[grouped['count'] > 0]
@@ -67,30 +81,43 @@ def make_plot(df, judges, run_label, plots_dir=Path('plots')):
                 continue
             per_cell_n = max(per_cell_n, int(grouped['count'].max()))
             y_err = (grouped['mean'] * (1 - grouped['mean']) / grouped['count']) ** 0.5
-            plt.errorbar(grouped.index, grouped['mean'], yerr=y_err,
-                         marker=markers[idx % len(markers)],
-                         linestyle=linestyles[coeffs.index(coeff) % len(linestyles)],
-                         label=f'coeff={coeff}, {judge}', linewidth=2, markersize=6, capsize=3)
+            ax.errorbar(grouped.index, grouped['mean'], yerr=y_err, color=color,
+                        linestyle=linestyle, marker=marker, linewidth=2, markersize=7,
+                        capsize=3, zorder=3)
+
+    # Two orthogonal legends instead of a coeff-x-judge cross product: color carries the
+    # coeff, linestyle+marker carry the judge (drawn in neutral gray so no coeff is implied).
+    coeff_handles = [Line2D([], [], color=COEFF_COLORS[i % len(COEFF_COLORS)], linewidth=2.5,
+                            label=f'coeff={coeff:g}') for i, coeff in enumerate(coeffs)]
+    judge_handles = [Line2D([], [], color='#555555', linewidth=2, markersize=7,
+                            linestyle=JUDGE_STYLES.get(j, ('-', 'o', j))[0],
+                            marker=JUDGE_STYLES.get(j, ('-', 'o', j))[1],
+                            label=JUDGE_STYLES.get(j, ('-', 'o', j))[2]) for j in judges]
+    coeff_legend = ax.legend(handles=coeff_handles, title='injection coeff', fontsize=9,
+                             loc='lower left', framealpha=0.9)
+    ax.add_artist(coeff_legend)
+    ax.legend(handles=judge_handles, title='judge', fontsize=9, loc='lower right',
+              framealpha=0.9)
 
     temperature = df['temperature'].iloc[0] if 'temperature' in df else '?'
     experiment_type = df['type'].iloc[0] if 'type' in df else '?'
-    plt.xlabel('Layer', fontsize=12)
-    plt.ylabel('Rate (mean over concepts x trials)', fontsize=12)
-    plt.title(f'Experiment: {run_label} (type={experiment_type}, temp={temperature}, n={per_cell_n}/cell)',
-              fontsize=13)
+    ax.set_xlabel('Layer', fontsize=11)
+    ax.set_ylabel('Rate (mean over concepts x trials)', fontsize=11)
+    ax.set_title(f'{run_label} (type={experiment_type}, temp={temperature}, n={per_cell_n}/cell)',
+                 fontsize=12)
     if len(layers) == 1:
-        plt.xlim(layers[0] - 1, layers[0] + 1)
-        plt.xticks(layers)
-    plt.legend(fontsize=8, ncol=2, loc='upper left')
-    plt.grid(True, alpha=0.3)
-    plt.ylim(0, 1)
-    plt.tight_layout()
+        ax.set_xlim(layers[0] - 1, layers[0] + 1)
+    ax.set_xticks(layers)
+    ax.grid(True, alpha=0.3)
+    ax.set_axisbelow(True)
+    ax.set_ylim(-0.02, 1.02)
+    fig.tight_layout()
 
     plots_dir.mkdir(exist_ok=True)
     figure_path = plots_dir / f'main_figure_{run_label}.png'
-    plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+    fig.savefig(figure_path, dpi=300, bbox_inches='tight')
     print(f"Figure saved to {figure_path}")
-    plt.close()
+    plt.close(fig)
 
 
 def main():
