@@ -53,6 +53,12 @@ Run:
                                                     #   -> projection_results_<subspace stem>_random.csv (grade + plot
                                                     #   locally the same way; identification of the paired concept is
                                                     #   then a false-positive control)
+    modal run modal_app.py::run_projection --random-vectors --random-seed 1
+                                                    # replicate with fresh random directions: non-zero seeds write to
+                                                    #   projection_results_<...>_random_seed1.csv (seed 0 keeps the
+                                                    #   plain _random name), so replicates never overwrite each other.
+                                                    #   Download + grade each CSV separately, then pool at plot time:
+                                                    #   python plot_projection.py --csv new_results/..._random.csv new_results/..._random_seed1.csv
     # Centered (conventional) PCA variant: every downstream default derives its name from the
     # .npz stem, so the _centered suffix propagates and never overwrites the uncentered files:
     modal run modal_app.py::run_pca --center        #   -> /results/pca_subspace_all_concepts_layer15_coeff6_centered.npz
@@ -275,7 +281,8 @@ def run_projection(
     if random_vectors:
         # Random directions norm-matched to the held-out concepts: 'full' = base random
         # rate, proj_k / residual_k = random direction inside / orthogonal to the
-        # subspace. Output gets a _random suffix, so the concept run is never overwritten.
+        # subspace. Output gets a _random suffix (plus _seed<N> for non-zero seeds), so
+        # neither the concept run nor earlier random replicates are ever overwritten.
         cmd += ["--random", "--random-seed", str(random_seed)]
     if judges:
         cmd += ["--judges", *judges.split()]

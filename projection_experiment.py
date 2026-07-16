@@ -32,7 +32,9 @@ for random ones, the subspace carries concept-specific signal rather than "any d
 in the subspace trips the detector". Rows keep the paired concept's name, so the
 identification judge measures false identification of that concept (expected ~ control
 rate); results land in projection_results_<subspace stem>_random.csv, never overwriting
-the concept-vector run.
+the concept-vector run. Replicate with fresh directions via --random-seed N (N != 0),
+which writes ..._random_seed<N>.csv -- each seed gets its own file (grade each with
+judge_results.py as usual), and plot_projection.py accepts several CSVs to pool them.
 
 Like the other GPU steps, this GENERATES ONLY by default (--judges none): no OpenAI calls
 run on the GPU. It writes projection_results_<subspace stem>.csv (judge columns empty) plus
@@ -92,8 +94,6 @@ def project(v, mean, components, k):
 def build_variants(v, mean, components, ks, interp_steps, normalize=True):
     """Directions to inject for one concept vector v."""
 
-    target_norm = np.linalg.norm(v)
-
     def normalize_vec(vec):
         if not normalize:
             return vec
@@ -102,9 +102,7 @@ def build_variants(v, mean, components, ks, interp_steps, normalize=True):
         if np.isclose(norm, 0.0):
             return None
 
-        # Use `vec / norm` here instead for unit vectors.
-        # Normalizing to targert norm so coefficents used in previous experiments match
-        return vec / norm * target_norm
+        return vec / norm
 
     out = []
 
@@ -169,7 +167,9 @@ def main():
                              "suffix so it never overwrites the concept-vector run.")
     parser.add_argument("--random-seed", type=int, default=0,
                         help="Seed for the random directions (each concept gets its own "
-                             "substream, so reruns re-inject identical directions)")
+                             "substream, so reruns re-inject identical directions). A "
+                             "non-zero seed adds a _seed<N> suffix to the output CSV, so "
+                             "replicate runs never overwrite each other")
     parser.add_argument("--model", type=str, default="meta-llama/Meta-Llama-3.1-8B-Instruct")
     parser.add_argument("--judges", type=str, nargs="+", default=["none"],
                         help="Judges to run INLINE. Default 'none' = generate only (no OpenAI "
@@ -257,13 +257,19 @@ def main():
                     r["trial"] = trial_i
                     r["temperature"] = args.temperature   # for judge_results.py plot compat
                     # 'random' rows still carry the paired concept's name (norm match +
-                    # false-identification control); this column tells them apart.
+                    # false-identification control); this column tells them apart, and
+                    # the seed keeps replicates distinguishable once CSVs are pooled.
                     r["vector_source"] = "random" if args.random else "concept"
+                    r["random_seed"] = args.random_seed if args.random else None
                     rows.append(r)
 
     df = pd.DataFrame(rows)
-    default_out = f"projection_results_{Path(args.subspace).stem}" \
-                  + ("_random" if args.random else "") + ".csv"
+    # Seed 0 keeps the plain _random name (the original run); other seeds get their own
+    # file so replicates never overwrite it and can be pooled at plot time.
+    suffix = ""
+    if args.random:
+        suffix = "_random" if args.random_seed == 0 else f"_random_seed{args.random_seed}"
+    default_out = f"projection_results_{Path(args.subspace).stem}{suffix}.csv"
     out = Path(args.out) if args.out else Path(default_out)
     df.to_csv(out, index=False)
     print(f"\nSaved {len(df)} rows to {out}")

@@ -25,6 +25,36 @@ are available (defaults match pca.py / projection_experiment.py).
 
     python plot_projection.py --csv projection_results_pca_subspace_all_concepts_layer15_coeff6.csv
 
+--csv accepts several files of the same sweep and pools their trials -- meant for --random
+replicates run at different --random-seed values (seed 0 = ..._random.csv, seed N =
+..._random_seed<N>.csv). Pooled outputs get a _pooled<N> suffix:
+
+    python plot_projection.py --csv new_results/projection_results_..._random.csv \
+        new_results/projection_results_..._random_seed1.csv
+
+Two optional reference lines put the curves in context (drawn on every panel whose judge
+they can be computed for):
+
+  --no-injection-csv  a graded control run with no vector injected (e.g.
+                      new_results/output_control_no_injection.csv). Its rate is the
+                      judge's false-positive floor -- e.g. the model claims to detect a
+                      thought ~19% of the time when nothing was injected.
+  --random-csv        graded --random projection CSVs (several seeds are pooled). Only
+                      their 'full' rows are used: the rate when a random Gaussian
+                      direction (norm-matched to the concept vector) is injected at full
+                      strength -- "any strong-enough perturbation trips the detector"
+                      baseline. Judges that are ungraded there (e.g. correct
+                      identification, which has no ground truth for a random direction)
+                      are skipped automatically.
+  --full-csv          the mirror image, for plotting a --random sweep: 'full' rows of the
+                      concept-vector projection CSVs give the real-vector baseline. (A
+                      random sweep's own built-in baseline is labeled 'random vector',
+                      since its 'full' rows inject the random direction, not a concept.)
+  --all-concepts-csv  a graded full-injection output_*.csv over the whole concept set
+                      (e.g. new_results/output_all_concepts_layer15_coeff6.csv): the
+                      unselected population rate, next to which the sweep's baseline
+                      shows how much the identified-at-least-once filter inflates it.
+
 Writes plots/projection_curves_<run>.png (+ projection_curves_<run>_angle.png) and prints
 the per-judge, per-k tables.
 """
@@ -54,13 +84,20 @@ JUDGE_LABELS = {
     "coherence": "coherent",
     "thinking_about_word": "thinking about word",
     f"{COHERENCE_JUDGE}+{DETECT_JUDGE}": "coherent & detected",
-    f"{COHERENCE_JUDGE}+{SUCCESS_JUDGE}": "coherent & detected + identified",
+    f"{COHERENCE_JUDGE}+{SUCCESS_JUDGE}": "coherent & correctly identified",
 }
 
 # Okabe-Ito, colorblind-safe, assigned to k in fixed order (never cycled). Identity is
 # always carried by the legend too, never color alone.
 K_COLORS = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9"]
 BASELINE_COLOR = "#555555"
+# Reference lines are gray, telling them apart by dash pattern + legend, never color.
+BASELINE_STYLES = {
+    "full vector": ("#555555", (0, (4, 3))),
+    "no injection": ("#999999", (0, (1, 1.8))),
+    "random vector": ("#333333", (0, (6, 1.5, 1, 1.5))),
+    "all concepts": ("#777777", (0, (2.5, 2.5))),
+}
 MAX_COLS = 3
 
 
@@ -127,9 +164,15 @@ def subspace_angles(df, subspace_path, vectors_dir, ks, alphas):
     return pd.DataFrame(rows, columns=["concept", "k", "alpha", "angle"])
 
 
-def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label):
+def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label, baselines=(),
+                baseline_alpha=None):
     """One panel per judge spec, one line per k. angle_df=None -> x is alpha; else x is the
-    angle to the subspace in degrees, with each concept's rate scattered at its own angle."""
+    angle to the subspace in degrees, with each concept's rate scattered at its own angle.
+    baselines: extra (style, label, dataframe) reference sources drawn as horizontal lines
+    on every panel whose judge spec is graded in that dataframe (style keys BASELINE_STYLES).
+    baseline_alpha: draw the run's own baseline from the sweep rows at this alpha (pooled
+    over k) instead of the 'full' rows -- see the --baseline-alpha help for when the two
+    are the same direction."""
     ncols = min(MAX_COLS, len(judges))
     nrows = ceil(len(judges) / ncols)
     fig, axes = plt.subplots(nrows, ncols, figsize=(6.2 * ncols, 5.4 * nrows),
@@ -141,12 +184,36 @@ def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label):
     full_mask = df["variant"] == "full"
     full_n = int(spec_rate(df, judges[0])[full_mask].notna().sum())
 
+    # The run's own 'full' rows inject the concept vector -- except in a --random sweep,
+    # where they inject the random direction, so the built-in baseline is named for what
+    # it actually is.
+    own_name = ("random vector"
+                if "vector_source" in df.columns and (df["vector_source"] == "random").any()
+                else "full vector")
+    if baseline_alpha is None:
+        own_mask, own_label = full_mask, own_name
+    else:
+        # Every k injects the same direction at this alpha (for an uncentered subspace and
+        # alpha=0.5 it IS the full vector), so pooling over k just multiplies the trials.
+        own_mask = df["alpha"].notna() & np.isclose(df["alpha"].fillna(-1.0), baseline_alpha)
+        own_label = f"{own_name} @ alpha={baseline_alpha:g}"
+
     for ax, judge in zip(flat, judges):
         rate = spec_rate(df, judge)
-        # full baseline (alpha is NaN for these rows): a horizontal reference line.
-        full_rate = rate[full_mask].mean()
-        ax.axhline(full_rate, color=BASELINE_COLOR, linestyle=(0, (4, 3)), linewidth=1.6,
-                   label=f"full vector ({full_rate:.2f})", zorder=2)
+        # Reference lines: the run's own baseline rows, then any extra baseline runs.
+        # Skipped where the spec isn't graded (mean of no rows = NaN).
+        for name, label, src, src_rate in ([(own_name, own_label, df, rate[own_mask])]
+                                           + [(s, l, b, None) for s, l, b in baselines]):
+            if src_rate is None:
+                if any(f"{p}_judge" not in src.columns for p in judge.split("+")):
+                    continue
+                src_rate = spec_rate(src, judge)
+            r = src_rate.dropna()
+            if r.empty:
+                continue
+            color, dashes = BASELINE_STYLES[name]
+            ax.axhline(r.mean(), color=color, linestyle=dashes, linewidth=1.6,
+                       label=f"{label} ({r.mean():.2f}, n={len(r)})", zorder=2)
 
         for i, k in enumerate(ks):
             color = K_COLORS[i % len(K_COLORS)]
@@ -214,12 +281,38 @@ def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label):
 
 def main():
     parser = argparse.ArgumentParser(description="Plot projection sweep rate vs alpha/angle per k")
-    parser.add_argument("--csv", type=str, required=True,
-                        help="Graded projection_results_*.csv")
+    parser.add_argument("--csv", type=str, nargs="+", required=True,
+                        help="Graded projection_results_*.csv. Several CSVs of the same sweep "
+                             "(e.g. --random runs at different --random-seed values) are "
+                             "pooled; the output gets a _pooled<N> suffix so single-run "
+                             "plots aren't overwritten")
     parser.add_argument("--judges", type=str, nargs="+", default=DEFAULT_JUDGES,
                         help="Judge columns to plot, one subplot each; combine with '+' for "
                              "logical AND, e.g. coherence+affirmative_response "
                              "(default: detection, identification, coherence, and both ANDs)")
+    parser.add_argument("--no-injection-csv", type=str, default=None,
+                        help="Graded control CSV with no vector injected (e.g. "
+                             "new_results/output_control_no_injection.csv); drawn as a "
+                             "dotted false-positive-floor line on every applicable panel")
+    parser.add_argument("--random-csv", type=str, nargs="+", default=None,
+                        help="Graded --random projection CSVs (seeds are pooled); their "
+                             "'full' rows give the full-strength random-direction baseline, "
+                             "drawn as a dash-dot line on every applicable panel")
+    parser.add_argument("--baseline-alpha", type=float, default=None,
+                        help="Draw the run's own baseline from the sweep rows at this alpha "
+                             "(pooled over k) instead of the 'full' rows. alpha=0.5 mixes "
+                             "proj and residual equally, which for an UNCENTERED subspace "
+                             "is exactly the full-vector direction re-measured inside the "
+                             "sweep with k-times the trials; for a centered subspace the "
+                             "direction differs, so there it is just 'the mid-sweep rate'")
+    parser.add_argument("--full-csv", type=str, nargs="+", default=None,
+                        help="Graded concept-vector projection CSVs; their 'full' rows give "
+                             "the full-strength concept-vector baseline (dashed). Meant for "
+                             "plotting a --random sweep next to the real-vector rate")
+    parser.add_argument("--all-concepts-csv", type=str, default=None,
+                        help="Graded full-injection output_*.csv over the whole concept set; "
+                             "its rate is the unselected-population baseline (the sweep only "
+                             "uses concepts that were identified at least once)")
     parser.add_argument("--subspace", type=str, default=None,
                         help="pca_subspace_*.npz for the angle-axis figure (default: derived "
                              "from the CSV name; angle figure is skipped if not found)")
@@ -231,9 +324,15 @@ def main():
                              "angle figure gets an _angle suffix)")
     args = parser.parse_args()
 
-    csv_path = Path(args.csv)
-    run_label = csv_path.stem.removeprefix("projection_results_").removeprefix("output_")
-    df = pd.read_csv(csv_path)
+    csv_paths = [Path(p) for p in args.csv]
+    csv_path = csv_paths[0]
+    # base_label (first CSV) also drives the subspace-.npz lookup below; the pooled
+    # suffix only decorates outputs, so plots of a single run are never overwritten.
+    base_label = csv_path.stem.removeprefix("projection_results_").removeprefix("output_")
+    run_label = base_label + (f"_pooled{len(csv_paths)}" if len(csv_paths) > 1 else "")
+    df = pd.concat([pd.read_csv(p) for p in csv_paths], ignore_index=True)
+    if len(csv_paths) > 1:
+        print(f"Pooling {len(csv_paths)} CSVs ({len(df)} rows total).")
 
     ks = sorted(int(k) for k in df.loc[df["k"].notna(), "k"].unique())
     alphas = sorted(a for a in df.loc[df["variant"] != "full", "alpha"].dropna().unique())
@@ -249,17 +348,48 @@ def main():
     if not judges:
         raise SystemExit("No graded judge columns to plot. Grade the CSV with judge_results.py first.")
 
+    def sweep_baseline(style, paths):
+        """External sweep CSVs as a baseline source, using the same rows the run's own
+        baseline uses: 'full' rows, or the sweep rows at --baseline-alpha (pooled over k;
+        for an uncentered subspace and alpha=0.5 that is the same direction, re-measured
+        with k-times the trials)."""
+        src = pd.concat([pd.read_csv(p) for p in paths], ignore_index=True)
+        if args.baseline_alpha is None:
+            return style, style, src[src["variant"] == "full"]
+        sel = src["alpha"].notna() & np.isclose(src["alpha"].fillna(-1.0), args.baseline_alpha)
+        return style, f"{style} @ alpha={args.baseline_alpha:g}", src[sel]
+
+    baselines = []
+    if args.no_injection_csv:
+        ctrl = pd.read_csv(args.no_injection_csv)
+        # Nothing is injected in the control run, so 'correct identification' has no ground
+        # truth there and was never actually measured -- drop the spuriously-filled column
+        # so no fake 0% line lands on identification panels.
+        ctrl = ctrl.drop(columns=[f"{SUCCESS_JUDGE}_judge"], errors="ignore")
+        baselines.append(("no injection", "no injection", ctrl))
+    if args.all_concepts_csv:
+        baselines.append(("all concepts", "all concepts", pd.read_csv(args.all_concepts_csv)))
+    if args.full_csv:
+        baselines.append(sweep_baseline("full vector", args.full_csv))
+    if args.random_csv:
+        baselines.append(sweep_baseline("random vector", args.random_csv))
+
     plots_dir = Path("plots")
     out_path = Path(args.out) if args.out else plots_dir / f"projection_curves_{run_label}.png"
-    draw_figure(df, judges, ks, alphas, None, out_path, run_label)
+    draw_figure(df, judges, ks, alphas, None, out_path, run_label, baselines,
+                args.baseline_alpha)
 
     # Angle-axis version: same curves, x = actual degrees between direction and subspace.
     # Newer CSVs store the exact per-row angle, so no subspace/.pt files are needed -- and
     # it is the only correct source for --random runs, whose injected directions aren't on
     # disk (the .pt files hold the CONCEPT vectors, so recomputing would give wrong angles).
     if "angle" in df.columns and df["angle"].notna().any():
+        # Mean (not drop_duplicates): pooled random seeds inject a different direction per
+        # seed, so the same (concept, k, alpha) carries several angles -- average them for
+        # the curve's x position. For a single CSV the angle is constant per group anyway.
         angle_df = (df.loc[df["variant"] != "full", ["concept", "k", "alpha", "angle"]]
-                    .dropna(subset=["angle"]).drop_duplicates())
+                    .dropna(subset=["angle"])
+                    .groupby(["concept", "k", "alpha"], as_index=False)["angle"].mean())
     elif "vector_source" in df.columns and (df["vector_source"] == "random").any():
         print("Random-direction run without a stored angle column: skipping the angle-axis "
               "figure (vector files hold the concept vectors, not the injected random "
@@ -269,7 +399,7 @@ def main():
         if args.subspace:
             subspace_path = Path(args.subspace)
         else:
-            name = run_label if run_label.startswith("pca_subspace") else f"pca_subspace_{run_label}"
+            name = base_label if base_label.startswith("pca_subspace") else f"pca_subspace_{base_label}"
             subspace_path = Path(f"{name}.npz")
             if not subspace_path.exists():
                 subspace_path = csv_path.parent / subspace_path.name
@@ -284,7 +414,8 @@ def main():
                   f"or pass --subspace/--vectors-dir explicitly.")
     if angle_df is not None:
         draw_figure(df, judges, ks, alphas, angle_df,
-                    out_path.with_stem(out_path.stem + "_angle"), run_label)
+                    out_path.with_stem(out_path.stem + "_angle"), run_label, baselines,
+                    args.baseline_alpha)
 
     # Per-judge, per-k table (rows: k, cols: alpha) so the numbers back the picture.
     for judge in judges:
