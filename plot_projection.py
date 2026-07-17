@@ -50,9 +50,12 @@ they can be computed for):
                       identification, which has no ground truth for a random direction)
                       are skipped automatically.
   --full-csv          the mirror image, for plotting a --random sweep: 'full' rows of the
-                      concept-vector projection CSVs give the real-vector baseline. (A
-                      random sweep's own built-in baseline is labeled 'random vector',
-                      since its 'full' rows inject the random direction, not a concept.)
+                      concept-vector projection CSVs give the real-vector baseline,
+                      labeled 'concepts identified >= 1/5 trials' because the sweeps
+                      only run on concepts the all-concepts run identified in at least
+                      1 of their 5 trials. (A random sweep's own built-in baseline is labeled
+                      'random vector', since its 'full' rows inject the random
+                      direction, not a concept.)
   --all-concepts-csv  a graded full-injection output_*.csv over the whole concept set
                       (e.g. new_results/output_all_concepts_layer15_coeff6.csv): the
                       unselected population rate, next to which the sweep's baseline
@@ -65,6 +68,7 @@ import argparse
 from math import atan2, ceil, degrees
 from pathlib import Path
 
+import matplotlib.patheffects as path_effects
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -90,13 +94,21 @@ JUDGE_LABELS = {
     f"{COHERENCE_JUDGE}+{SUCCESS_JUDGE}": "coherent & correctly identified",
 }
 
+# The projection sweeps only run on the test concepts that were identified in at least 1
+# of their 5 trials in the full-injection all-concepts run, so the full-strength
+# concept-vector baseline is named for that filtered population (vs the unfiltered
+# "all concepts" line).
+# mathtext \geq, not the unicode char: console prints of the label must survive
+# Windows' cp1252 stdout encoding.
+FULL_VECTOR_LABEL = r"concepts identified $\geq$ 1/5 trials"
+
 # Okabe-Ito, colorblind-safe, assigned to k in fixed order (never cycled). Identity is
 # always carried by the legend too, never color alone.
 K_COLORS = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9"]
 BASELINE_COLOR = "#555555"
 # Reference lines are gray, telling them apart by dash pattern + legend, never color.
 BASELINE_STYLES = {
-    "full vector": ("#555555", (0, (4, 3))),
+    FULL_VECTOR_LABEL: ("#555555", (0, (4, 3))),
     "no injection": ("#999999", (0, (1, 1.8))),
     "random vector": ("#333333", (0, (6, 1.5, 1, 1.5))),
     "all concepts": ("#777777", (0, (2.5, 2.5))),
@@ -167,15 +179,20 @@ def subspace_angles(df, subspace_path, vectors_dir, ks, alphas):
     return pd.DataFrame(rows, columns=["concept", "k", "alpha", "angle"])
 
 
-def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label, baselines=(),
-                baseline_alpha=None, sweep="alpha"):
+def draw_figure(df, judges, ks, alphas, angle_df, out_path, title, baselines=(),
+                baseline_alpha=None, sweep="alpha", paper=False):
     """One panel per judge spec, one line per k. angle_df=None -> x is alpha; else x is the
     angle to the subspace in degrees, with each concept's rate scattered at its own angle.
+    title: run description; single panel puts it in the panel title with the judge spec on
+    the y axis, multi-panel puts it in the headline with the judge spec as panel subtitle.
     baselines: extra (style, label, dataframe) reference sources drawn as horizontal lines
     on every panel whose judge spec is graded in that dataframe (style keys BASELINE_STYLES).
     baseline_alpha: draw the run's own baseline from the sweep rows at this alpha (pooled
     over k) instead of the 'full' rows -- see the --baseline-alpha help for when the two
-    are the same direction."""
+    are the same direction.
+    paper: ICML style -- direct-label each baseline at the right end of its line (no rate
+    number, no baseline legend box); at column width the gray dash patterns are no longer
+    tellable apart in a legend, direct labels survive the shrink."""
     ncols = min(MAX_COLS, len(judges))
     nrows = ceil(len(judges) / ncols)
     fig, axes = plt.subplots(nrows, ncols, figsize=(6.2 * ncols, 5.4 * nrows),
@@ -185,26 +202,30 @@ def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label, baselines
         ax.set_visible(False)
 
     full_mask = df["variant"] == "full"
-    full_n = int(spec_rate(df, judges[0])[full_mask].notna().sum())
 
     # The run's own 'full' rows inject the concept vector -- except in a --random sweep,
     # where they inject the random direction, so the built-in baseline is named for what
     # it actually is.
     own_name = ("random vector"
                 if "vector_source" in df.columns and (df["vector_source"] == "random").any()
-                else "full vector")
+                else FULL_VECTOR_LABEL)
+    own_label = own_name
     if baseline_alpha is None:
-        own_mask, own_label = full_mask, own_name
+        own_mask = full_mask
     else:
         # Every k injects the same direction at this alpha (for an uncentered subspace and
         # alpha=0.5 it IS the full vector), so pooling over k just multiplies the trials.
+        # The alpha choice stays out of the label (it decorates every legend confusingly);
+        # the console print and the README command document it.
         own_mask = df["alpha"].notna() & np.isclose(df["alpha"].fillna(-1.0), baseline_alpha)
-        own_label = f"{own_name} @ alpha={baseline_alpha:g}"
 
-    for ax, judge in zip(flat, judges):
+    for panel, (ax, judge) in enumerate(zip(flat, judges)):
         rate = spec_rate(df, judge)
         # Reference lines: the run's own baseline rows, then any extra baseline runs.
-        # Skipped where the spec isn't graded (mean of no rows = NaN).
+        # Skipped where the spec isn't graded (mean of no rows = NaN). n stays out of the
+        # legend (figure captions carry it); it is printed below instead.
+        baseline_handles = []
+        drawn_baselines = []
         for name, label, src, src_rate in ([(own_name, own_label, df, rate[own_mask])]
                                            + [(s, l, b, None) for s, l, b in baselines]):
             if src_rate is None:
@@ -215,9 +236,16 @@ def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label, baselines
             if r.empty:
                 continue
             color, dashes = BASELINE_STYLES[name]
-            ax.axhline(r.mean(), color=color, linestyle=dashes, linewidth=1.6,
-                       label=f"{label} ({r.mean():.2f}, n={len(r)})", zorder=2)
+            line = ax.axhline(r.mean(), color=color, linestyle=dashes, linewidth=1.6,
+                              label=f"{label} ({r.mean():.2f})", zorder=2)
+            if paper:
+                drawn_baselines.append((float(r.mean()), label, color))
+            else:
+                baseline_handles.append(line)
+            print(f"[{spec_label(judge)}] baseline {label}: {r.mean():.3f} (n={len(r)})")
 
+        k_handles = []
+        curve_ends = {"left": [], "right": []}
         for i, k in enumerate(ks):
             color = K_COLORS[i % len(K_COLORS)]
             angle_of = None
@@ -247,10 +275,42 @@ def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label, baselines
                 means.append(p)
                 errs.append((p * (1 - p) / n) ** 0.5)   # binomial standard error
             if xs:
-                ax.errorbar(xs, means, yerr=errs, marker="o", markersize=7, linewidth=2,
-                            capsize=3, color=color, label=f"k={k}", zorder=3)
+                k_handles.append(
+                    ax.errorbar(xs, means, yerr=errs, marker="o", markersize=7, linewidth=2,
+                                capsize=3, color=color, label=f"k={k}", zorder=3))
+                curve_ends["left"].append(means[0])
+                curve_ends["right"].append(means[-1])
 
-        ax.set_title(spec_label(judge), fontsize=12)
+        # --paper: name each baseline at whichever end of its line the curves leave more
+        # room, above it by default, below when another baseline sits close overhead but
+        # not underfoot. A white stroke keeps the text readable over grid lines/curves.
+        for y, label, color in drawn_baselines:
+            clearance = {side: min((abs(y - v) for v in curve_ends[side]), default=np.inf)
+                         for side in curve_ends}
+            side = "right" if clearance["right"] >= clearance["left"] else "left"
+            others = [o for o, _, _ in drawn_baselines if o != y]
+            crowded_above = any(0 < o - y < 0.06 for o in others)
+            crowded_below = any(0 < y - o < 0.06 for o in others)
+            va = "top" if (crowded_above and not crowded_below) else "bottom"
+            ax.text(0.985 if side == "right" else 0.015,
+                    y + (-0.012 if va == "top" else 0.012), label,
+                    transform=ax.get_yaxis_transform(),
+                    ha=side, va=va, fontsize=8, color=color, zorder=4,
+                    path_effects=[path_effects.withStroke(linewidth=2.5, foreground="white")])
+
+        # Single panel: run description as panel title, metric on the y axis. Multi-panel:
+        # run description once as the headline, metric as each panel's subtitle (the
+        # judge differs per panel while sharey shares the scale, so the left column's
+        # plain "Rate" label covers all panels).
+        judge_label = spec_label(judge)
+        metric = judge_label[0].upper() + judge_label[1:] + " rate"
+        if len(judges) > 1:
+            ax.set_title(metric, fontsize=12)
+            if panel % ncols == 0:
+                ax.set_ylabel("Rate", fontsize=11)
+        else:
+            ax.set_title(title, fontsize=12)
+            ax.set_ylabel(metric, fontsize=11)
         ax.set_ylim(-0.02, 1.02)
         ax.grid(True, alpha=0.3)
         ax.set_axisbelow(True)
@@ -275,12 +335,22 @@ def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label, baselines
         for text, x in ends:
             ax.annotate(text, (x, 0), xytext=(0, -34), textcoords="offset points",
                         ha="center", fontsize=8, color=BASELINE_COLOR)
-        ax.legend(fontsize=9, loc="best", framealpha=0.9, title="subspace dim")
+        # Two compact legends in the top corners instead of one big box over the data:
+        # the coherence-ANDed rates top out well below 1.0, so that strip is free. Two
+        # legends can't share matplotlib's "best" placement, hence the fixed corners.
+        # (--paper direct-labels the baselines instead, so only the k legend remains.)
+        if baseline_handles:
+            base_legend = ax.legend(handles=baseline_handles, fontsize=8, loc="upper left",
+                                    framealpha=0.9, title="baselines", title_fontsize=8)
+            ax.add_artist(base_legend)
+        ax.legend(handles=k_handles, fontsize=8, loc="upper right", framealpha=0.9,
+                  title="subspace dim k", title_fontsize=8)
 
-    for row in axes:
-        row[0].set_ylabel("Rate (mean over concepts x trials)", fontsize=11)
-    fig.suptitle(f"Projection sweep: {run_label}  (n_full={full_n} trials)", fontsize=13)
-    fig.tight_layout(rect=(0, 0.01, 1, 0.97))
+    if len(judges) > 1:
+        fig.suptitle(title, fontsize=13)
+        fig.tight_layout(rect=(0, 0, 1, 0.95))
+    else:
+        fig.tight_layout()
 
     out_path.parent.mkdir(exist_ok=True)
     fig.savefig(out_path, dpi=300, bbox_inches="tight")
@@ -316,7 +386,9 @@ def main():
                              "direction differs, so there it is just 'the mid-sweep rate'")
     parser.add_argument("--full-csv", type=str, nargs="+", default=None,
                         help="Graded concept-vector projection CSVs; their 'full' rows give "
-                             "the full-strength concept-vector baseline (dashed). Meant for "
+                             "the full-strength concept-vector baseline (dashed), labeled as "
+                             "the concepts identified at least once in the all-concepts run "
+                             "(the population every sweep is restricted to). Meant for "
                              "plotting a --random sweep next to the real-vector rate")
     parser.add_argument("--all-concepts-csv", type=str, default=None,
                         help="Graded full-injection output_*.csv over the whole concept set; "
@@ -331,6 +403,14 @@ def main():
     parser.add_argument("--out", type=str, default=None,
                         help="Output PNG (default: plots/projection_curves_<run>.png; the "
                              "angle figure gets an _angle suffix)")
+    parser.add_argument("--title", type=str, default=None,
+                        help="Panel title describing the run (default: 'Random vector "
+                             "projections' for --random sweeps, else 'Concept vector "
+                             "projections')")
+    parser.add_argument("--paper", action="store_true",
+                        help="ICML style: direct-label each baseline at the right end of "
+                             "its line (no rate numbers, no baseline legend box) and "
+                             "write to ..._paper.png instead of overwriting the default")
     args = parser.parse_args()
 
     csv_paths = [Path(p) for p in args.csv]
@@ -383,8 +463,10 @@ def main():
         src = pd.concat([pd.read_csv(p) for p in paths], ignore_index=True)
         if args.baseline_alpha is None:
             return style, style, src[src["variant"] == "full"]
+        # Row choice (like the run's own baseline) is documented in the console print and
+        # the README command, not in the legend label.
         sel = src["alpha"].notna() & np.isclose(src["alpha"].fillna(-1.0), args.baseline_alpha)
-        return style, f"{style} @ alpha={args.baseline_alpha:g}", src[sel]
+        return style, style, src[sel]
 
     baselines = []
     if args.no_injection_csv:
@@ -397,14 +479,20 @@ def main():
     if args.all_concepts_csv:
         baselines.append(("all concepts", "all concepts", pd.read_csv(args.all_concepts_csv)))
     if args.full_csv:
-        baselines.append(sweep_baseline("full vector", args.full_csv))
+        baselines.append(sweep_baseline(FULL_VECTOR_LABEL, args.full_csv))
     if args.random_csv:
         baselines.append(sweep_baseline("random vector", args.random_csv))
 
+    is_random = "vector_source" in df.columns and (df["vector_source"] == "random").any()
+    title = args.title or ("Random vector projections" if is_random
+                           else "Concept vector projections")
+
     plots_dir = Path("plots")
-    out_path = Path(args.out) if args.out else plots_dir / f"projection_curves_{run_label}.png"
-    draw_figure(df, judges, ks, alphas, None, out_path, run_label, baselines,
-                own_baseline_alpha, sweep_mode)
+    suffix = "_paper" if args.paper else ""
+    out_path = (Path(args.out) if args.out
+                else plots_dir / f"projection_curves_{run_label}{suffix}.png")
+    draw_figure(df, judges, ks, alphas, None, out_path, title, baselines,
+                own_baseline_alpha, sweep_mode, args.paper)
 
     # Angle-axis version: same curves, x = actual degrees between direction and subspace.
     # Newer CSVs store the exact per-row angle, so no subspace/.pt files are needed -- and
@@ -441,8 +529,8 @@ def main():
                   f"or pass --subspace/--vectors-dir explicitly.")
     if angle_df is not None:
         draw_figure(df, judges, ks, alphas, angle_df,
-                    out_path.with_stem(out_path.stem + "_angle"), run_label, baselines,
-                    own_baseline_alpha, sweep_mode)
+                    out_path.with_stem(out_path.stem + "_angle"), title, baselines,
+                    own_baseline_alpha, sweep_mode, args.paper)
 
     # Per-judge, per-k table (rows: k, cols: alpha) so the numbers back the picture.
     for judge in judges:
