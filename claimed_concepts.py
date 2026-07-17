@@ -96,34 +96,20 @@ def report_condition(label, words, control_vocab, train_names, top):
 
 
 def pc_neighbors(subspace_path, vectors_dir, n_pcs=5, n_neighbors=5):
-    """Nearest concept vectors of each top PC (cosine, +/- direction): reveals which
-    semantic category each component encodes. Needs the saved .pt vectors."""
-    import torch
+    """Nearest concept vectors of each top PC: reveals which semantic category each
+    component encodes. Full table (all PCs, CSV export): pc_neighbors.py."""
+    from pc_neighbors import pc_neighbor_table
 
-    d = np.load(subspace_path, allow_pickle=True)
-    comps = d["components"].astype(np.float32)
-    layer, vec_type = int(d["layer"]), str(d["vec_type"])
-
-    names, vecs = [], []
-    for fp in Path(vectors_dir).glob(f"*_{layer}_{vec_type}.pt"):
-        v = torch.load(fp, weights_only=False)["vector"]
-        v = np.asarray(v.detach().cpu().float() if isinstance(v, torch.Tensor) else v,
-                       dtype=np.float32).ravel()
-        n = np.linalg.norm(v)
-        if n > 0:
-            names.append(fp.stem.removesuffix(f"_{layer}_{vec_type}"))
-            vecs.append(v / n)
-    if not vecs:
-        print(f"\nNo vectors in {vectors_dir}; skipping the PC-neighbor listing.")
+    try:
+        rows, n_vectors = pc_neighbor_table(subspace_path, vectors_dir, n_pcs, n_neighbors)
+    except SystemExit as e:
+        print(f"\n{e}; skipping the PC-neighbor listing.")
         return
-    V = np.stack(vecs)
-
-    print(f"\nnearest concepts per top PC ({len(names)} vectors, cosine, +/- direction):")
-    for i in range(min(n_pcs, comps.shape[0])):
-        p = comps[i] / np.linalg.norm(comps[i])
-        sims = V @ p
-        order = np.argsort(-np.abs(sims))[:n_neighbors]
-        print(f"  PC{i + 1}: " + ", ".join(f"{names[j]} ({sims[j]:+.2f})" for j in order))
+    print(f"\nnearest concepts per top PC ({n_vectors} vectors, cosine, +/- direction):")
+    for pc in sorted({r[0] for r in rows}):
+        entries = [r for r in rows if r[0] == pc]
+        print(f"  PC{pc} (median {entries[0][4]:+.2f}): "
+              + ", ".join(f"{c} ({s:+.2f})" for _, _, c, s, _ in entries))
 
 
 def main():

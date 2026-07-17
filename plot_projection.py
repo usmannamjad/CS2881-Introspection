@@ -12,7 +12,10 @@ ANDed with each -- the AND panels separate "introspected" from "rambled incohere
 the judge pattern-matched".
 
 alpha is NOT linear in angle: proj and residual have different norms, so equal alpha steps
-sweep unequal angles. Injection re-normalizes every variant, but normalization only
+sweep unequal angles (severely so for --random runs, where ~sqrt(k/4096) of the norm is in
+the subspace and everything past alpha=0 bunches at 70-90 degrees -- prefer regenerating
+with projection_experiment.py --sweep angle, whose variants are evenly spaced in angle;
+such CSVs carry sweep='angle' and their alpha column is the sweep fraction t = angle/90). Injection re-normalizes every variant, but normalization only
 rescales a vector -- it never rotates it -- so the angle between the injected direction
 and the subspace is well defined: theta = atan2(alpha*||residual||, (1-alpha)*||proj||),
 running 0 deg (inside the subspace) -> 90 deg (orthogonal). A second figure is written
@@ -165,7 +168,7 @@ def subspace_angles(df, subspace_path, vectors_dir, ks, alphas):
 
 
 def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label, baselines=(),
-                baseline_alpha=None):
+                baseline_alpha=None, sweep="alpha"):
     """One panel per judge spec, one line per k. angle_df=None -> x is alpha; else x is the
     angle to the subspace in degrees, with each concept's rate scattered at its own angle.
     baselines: extra (style, label, dataframe) reference sources drawn as horizontal lines
@@ -253,7 +256,13 @@ def draw_figure(df, judges, ks, alphas, angle_df, out_path, run_label, baselines
         ax.set_axisbelow(True)
         # Anchor the ends of the sweep so proj/residual are unmistakable.
         if angle_df is None:
-            ax.set_xlabel("alpha  (0 = in subspace  ->  1 = orthogonal)", fontsize=10)
+            if sweep == "angle":
+                # Angle-sweep runs store the sweep fraction t in the alpha column; equal
+                # steps are equal rotations (nominal angle = t*90 deg).
+                ax.set_xlabel("sweep fraction t, uniform in angle "
+                              "(0 = in subspace  ->  1 = orthogonal)", fontsize=10)
+            else:
+                ax.set_xlabel("alpha  (0 = in subspace  ->  1 = orthogonal)", fontsize=10)
             ax.set_xlim(-0.04, 1.04)
             ax.set_xticks(alphas)
             ax.set_xticklabels([f"{a:.2f}" for a in alphas], fontsize=8)
@@ -337,6 +346,24 @@ def main():
     ks = sorted(int(k) for k in df.loc[df["k"].notna(), "k"].unique())
     alphas = sorted(a for a in df.loc[df["variant"] != "full", "alpha"].dropna().unique())
 
+    # Older CSVs predate the sweep column and are all alpha sweeps. In an angle sweep the
+    # alpha column holds the sweep fraction t (nominal angle = t*90), so pooling the two
+    # kinds would average incomparable x positions.
+    sweep_modes = (set(df["sweep"].dropna().unique()) if "sweep" in df.columns else set())
+    if len(sweep_modes) > 1:
+        raise SystemExit(f"Refusing to pool CSVs with different sweep modes ({sweep_modes}): "
+                         "their alpha columns mean different things.")
+    sweep_mode = sweep_modes.pop() if sweep_modes else "alpha"
+
+    own_baseline_alpha = args.baseline_alpha
+    if args.baseline_alpha is not None and sweep_mode == "angle":
+        # t=0.5 is the 45-degree direction, never the full vector, so the run's own
+        # baseline falls back to its 'full' rows. External --full-csv/--random-csv sweeps
+        # keep --baseline-alpha (it selects rows under THEIR alpha semantics).
+        print("Note: angle-sweep CSV -- t=0.5 is the 45-degree direction, not the full "
+              "vector; using the 'full' rows for the run's own baseline instead.")
+        own_baseline_alpha = None
+
     # Keep only judge specs whose every component is actually graded in this CSV.
     judges = []
     for spec in args.judges:
@@ -377,7 +404,7 @@ def main():
     plots_dir = Path("plots")
     out_path = Path(args.out) if args.out else plots_dir / f"projection_curves_{run_label}.png"
     draw_figure(df, judges, ks, alphas, None, out_path, run_label, baselines,
-                args.baseline_alpha)
+                own_baseline_alpha, sweep_mode)
 
     # Angle-axis version: same curves, x = actual degrees between direction and subspace.
     # Newer CSVs store the exact per-row angle, so no subspace/.pt files are needed -- and
@@ -415,7 +442,7 @@ def main():
     if angle_df is not None:
         draw_figure(df, judges, ks, alphas, angle_df,
                     out_path.with_stem(out_path.stem + "_angle"), run_label, baselines,
-                    args.baseline_alpha)
+                    own_baseline_alpha, sweep_mode)
 
     # Per-judge, per-k table (rows: k, cols: alpha) so the numbers back the picture.
     for judge in judges:

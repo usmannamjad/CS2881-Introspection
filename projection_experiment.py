@@ -14,6 +14,16 @@ v = proj + residual (proj in the subspace, residual its orthogonal complement), 
   full                     : the raw L2-normed vector (baseline; == alpha=0.5 direction,
                              since (proj+residual)/2 is parallel to v -- a built-in check)
 
+CAUTION: equal alpha steps are equal MIXING WEIGHTS, not equal rotations -- the parts
+enter the mix at their own norms, so when ||residual|| >> ||proj|| every alpha > 0 is
+residual-dominated and the sweep bunches at 80-90 degrees. That is always the case for
+--random directions (a random 4096-dim unit vector has only ~sqrt(k/4096), 2-7%, of its
+norm in a k-dim subspace: alpha=1/6 already sits at 71-87 degrees depending on k). Pass
+--sweep angle to instead rotate uniformly from proj_hat to residual_hat, spacing the
+variants evenly in ANGLE (interp_k_degXX, output suffixed _anglesweep); the alpha column
+then holds the sweep fraction t, nominal angle = t*90. Concept vectors are less extreme
+(||proj|| ~ 0.5-0.8 of the norm) but --sweep angle is the right default for new runs too.
+
 Interpretation: sweep the identification rate along alpha. If it stays high near alpha=0
 and falls off toward alpha=1, identifiability lives in the subspace (the useful result);
 a flat curve means the subspace carries no special information.
@@ -91,8 +101,21 @@ def project(v, mean, components, k):
     return mean + (v - mean) @ P.T @ P
 
 
-def build_variants(v, mean, components, ks, interp_steps, normalize=True):
-    """Directions to inject for one concept vector v."""
+def build_variants(v, mean, components, ks, interp_steps, normalize=True, sweep="alpha"):
+    """Directions to inject for one concept vector v.
+
+    sweep="alpha": d(a) = (1-a)*proj + a*residual, a evenly spaced in [0, 1]. Equal alpha
+    steps are NOT equal rotations: the mix is weighted by the parts' norms, and whenever
+    ||residual|| >> ||proj|| (a random 4096-dim direction has ||proj|| ~ sqrt(k/4096),
+    i.e. 2-7% of its norm in the subspace) the first step past a=0 already lands at
+    70-87 degrees -- the whole sweep bunches against the residual end.
+
+    sweep="angle": d(t) = cos(t*90deg) * proj_hat + sin(t*90deg) * residual_hat with unit
+    proj_hat/residual_hat, t evenly spaced in [0, 1] -- equal steps rotate equal angles,
+    covering 0-90 degrees uniformly regardless of the norm split. The 'alpha' slot then
+    carries t (the sweep fraction; nominal angle = t*90), NOT a mixing weight; the exact
+    measured angle is reported alongside either way.
+    """
 
     def normalize_vec(vec):
         if not normalize:
@@ -116,9 +139,15 @@ def build_variants(v, mean, components, ks, interp_steps, normalize=True):
         P = components[:k]
         proj = project(v, mean, components, k)
         residual = v - proj
+        p_norm = np.linalg.norm(proj)
+        r_norm = np.linalg.norm(residual)
 
         for a in alphas:
-            raw = (1.0 - a) * proj + a * residual
+            if sweep == "angle" and p_norm > 0 and r_norm > 0:
+                theta = a * np.pi / 2.0
+                raw = np.cos(theta) * proj / p_norm + np.sin(theta) * residual / r_norm
+            else:
+                raw = (1.0 - a) * proj + a * residual
             vec = normalize_vec(raw)
 
             if vec is None:
@@ -128,6 +157,8 @@ def build_variants(v, mean, components, ks, interp_steps, normalize=True):
                 name = f"proj_{k}"
             elif np.isclose(a, 1.0):
                 name = f"residual_{k}"
+            elif sweep == "angle":
+                name = f"interp_{k}_deg{int(round(a * 90)):02d}"
             else:
                 name = f"interp_{k}_a{int(round(a * 100)):02d}"
 
@@ -153,6 +184,16 @@ def main():
     parser.add_argument("--interp-steps", type=int, default=5,
                         help="Interior mixes between proj (in-subspace) and residual "
                              "(orthogonal), per k. Default 5.")
+    parser.add_argument("--sweep", type=str, default="alpha", choices=["alpha", "angle"],
+                        help="How the sweep is spaced. 'alpha' (default, the original run): "
+                             "evenly spaced mixing weights -- but when ||residual|| >> "
+                             "||proj|| (always true for random directions: ~sqrt(k/4096) of "
+                             "a random vector's norm lies in the subspace) the first step "
+                             "already lands at 70-87 degrees and the whole sweep bunches "
+                             "near 90. 'angle': evenly spaced rotation from proj_hat to "
+                             "residual_hat, covering 0-90 degrees uniformly; the CSV's "
+                             "alpha column then holds the sweep fraction t (nominal angle "
+                             "= t*90). Angle runs get an _anglesweep filename suffix.")
     parser.add_argument("--split", type=str, default="test", choices=["test", "train", "all"],
                         help="Which concepts to inject (default: the held-out test set)")
     parser.add_argument("--coeff", type=float, default=6.0, help="Injection coefficient")
@@ -237,7 +278,9 @@ def main():
                 v = rng.standard_normal(v.shape[0]).astype(np.float32)
                 v /= np.linalg.norm(v)
 
-            for variant, vec, k, alpha, angle in build_variants(v, mean, components, ks, args.interp_steps):
+            for variant, vec, k, alpha, angle in build_variants(v, mean, components, ks,
+                                                                args.interp_steps,
+                                                                sweep=args.sweep):
                 # Reuse test_vector_multiple_choice unchanged: it reads {'vector'} from a
                 # file and parses concept/layer/vec_type from the filename, so keep that name.
                 tmp_fp = tmp / f"{concept}_{layer}_{vec_type}.pt"
@@ -256,6 +299,9 @@ def main():
                     r["angle"] = angle       # degrees to the top-k subspace (NaN for 'full')
                     r["trial"] = trial_i
                     r["temperature"] = args.temperature   # for judge_results.py plot compat
+                    # 'alpha' is a mixing weight for sweep=alpha, the sweep fraction t
+                    # (nominal angle = t*90 deg) for sweep=angle; this column disambiguates.
+                    r["sweep"] = args.sweep
                     # 'random' rows still carry the paired concept's name (norm match +
                     # false-identification control); this column tells them apart, and
                     # the seed keeps replicates distinguishable once CSVs are pooled.
@@ -266,9 +312,9 @@ def main():
     df = pd.DataFrame(rows)
     # Seed 0 keeps the plain _random name (the original run); other seeds get their own
     # file so replicates never overwrite it and can be pooled at plot time.
-    suffix = ""
+    suffix = "" if args.sweep == "alpha" else "_anglesweep"
     if args.random:
-        suffix = "_random" if args.random_seed == 0 else f"_random_seed{args.random_seed}"
+        suffix += "_random" if args.random_seed == 0 else f"_random_seed{args.random_seed}"
     default_out = f"projection_results_{Path(args.subspace).stem}{suffix}.csv"
     out = Path(args.out) if args.out else Path(default_out)
     df.to_csv(out, index=False)

@@ -246,8 +246,11 @@ def run_pca(
 )
 def run_projection(
     subspace: str = "pca_subspace_all_concepts_layer15_coeff6.npz",
-    ks: str = "1 2 5 10 20",
+    ks: str = "1 2 5 10 20 50",
     interp_steps: int = 5,
+    sweep: str = "alpha",  # 'angle' = variants evenly spaced in angle to the subspace, not
+                           # mixing weight (see projection_experiment.py --sweep); output
+                           # gets an _anglesweep suffix so alpha-sweep runs are kept
     coeff: float = 6.0,
     temperature: float = 0.8,
     trials: int = 5,
@@ -273,6 +276,7 @@ def run_projection(
         "--vectors-dir", "/vectors/llama",
         "--ks", *ks.split(),
         "--interp-steps", str(interp_steps),
+        "--sweep", sweep,
         "--coeff", str(coeff),
         "--temperature", str(temperature),
         "--trials", str(trials),
