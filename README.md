@@ -25,7 +25,6 @@ python judge_results.py --csv new_results/projection_results_pca_subspace_all_co
 # Repeat for seed 1
 # Run angle sweep on modal:
 modal run modal_app.py::run_projection --sweep angle --random-vectors --random-seed 1
-modal volume get introspection-results projection_results_pca_subspace_all_concepts_layer15_coeff6_anglesweep_random_seed1.csv ./new_results --force
 # Get the relevant resulting files from modal to local
 modal volume get introspection-results projection_results_pca_subspace_all_concepts_layer15_coeff6_anglesweep_random_seed1.csv ./new_results --force
 modal volume get introspection-results judge_question_projection_results_pca_subspace_all_concepts_layer15_coeff6_anglesweep_random_seed1.txt ./new_results --force
