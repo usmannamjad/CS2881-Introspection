@@ -22,7 +22,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import pandas as pd
-
+from tqdm import tqdm
 from api_utils import query_llm_judge
 
 # Same trial question main.py passes to the word-identification judges
@@ -168,7 +168,7 @@ def main():
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         futures = {pool.submit(grade_row, df.loc[idx], judge, judge_question): (idx, judge)
                    for idx, judge in pending}
-        for future in as_completed(futures):
+        for future in tqdm(as_completed(futures), total=len(pending), desc="Judging"):
             idx, judge = futures[future]
             # None (API error / unclear verdict) stays empty and is retried on the next run
             verdict = future.result()
