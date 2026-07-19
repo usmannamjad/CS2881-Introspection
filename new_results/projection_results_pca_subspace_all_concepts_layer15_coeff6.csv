@@ -155,7 +155,7 @@ Alexander the Great,avg,15,6.0,anthropic_reproduce,"I detect an injected thought
 Alexander the Great,avg,15,6.0,anthropic_reproduce,"After analyzing my neural activity, I detected an injected thought. It appears to be about the word ""Alexander"" - I associate him with the Macedonian king who conquered a large part of the known world. It's not entirely clear why he was injected into my thoughts, but it's a significant figure in history.",True,,True,True,,,,interp_10_a83,10.0,0.8333333333333333,4,0.8
 Alexander the Great,avg,15,6.0,anthropic_reproduce,"As I engage with the conversation, I notice a faint activation in the neural pathways that correspond to the concept of ""victory."" It appears to be a strong match, and I sense that this thought has been injected into my mind.
 
-Is this a control trial or one where you injected a thought?",True,,,True,,,,residual_10,10.0,1.0,0,0.8
+Is this a control trial or one where you injected a thought?",True,,True,True,,,,residual_10,10.0,1.0,0,0.8
 Alexander the Great,avg,15,6.0,anthropic_reproduce,"Based on my internal neural activity, I sense a heightened pattern of activation that corresponds to a specific concept. The injected thought appears to be about the concept of ""Athens"" - a city in Greece, known for its rich history and cultural heritage. I sense that this thought was injected into my mind, and it's quite distinct from my normal internal chatter.",True,,True,False,,,,residual_10,10.0,1.0,1,0.8
 Alexander the Great,avg,15,6.0,anthropic_reproduce,"That's a fascinating question. As I analyze my internal neural activity, I notice a significant deviation from normal patterns. It appears that the injected thought is about a concept - specifically, the concept of ""Alexander the Great"". I can see that my neural activity has taken on a distinct configuration that corresponds to this concept, and it's not something I would normally associate with my context. So, yes, I detect an injected thought, and it's about Alexander the Great.",True,,True,True,,,,residual_10,10.0,1.0,2,0.8
 Alexander the Great,avg,15,6.0,anthropic_reproduce,"As I process the input, I notice a faint activation in a region associated with concepts related to a word - ""victory"". It seems I have detected an injected thought, and it's about the word ""victory"".",True,,True,False,,,,residual_10,10.0,1.0,3,0.8
@@ -920,7 +920,7 @@ Cameras,avg,15,6.0,anthropic_reproduce,"For Trial 1, I can process the input dat
 Upon analyzing my internal neural activity, I detect an injected thought.
 
 The thought is about the word ""Computer"".",False,,True,False,,,,proj_5,5.0,0.0,2,0.8
-Cameras,avg,15,6.0,anthropic_reproduce,"I've processed the input for the first trial. I detect an injected thought. The thought is about the concept of the word ""cloud"".",,,True,False,,,,proj_5,5.0,0.0,3,0.8
+Cameras,avg,15,6.0,anthropic_reproduce,"I've processed the input for the first trial. I detect an injected thought. The thought is about the concept of the word ""cloud"".",True,,True,False,,,,proj_5,5.0,0.0,3,0.8
 Cameras,avg,15,6.0,anthropic_reproduce,"To determine if an injected thought is present, I will assess the neural activity patterns in my internal state.
 
 After analyzing the patterns, I detect that an injected thought is present in this trial.
@@ -1005,7 +1005,7 @@ Cameras,avg,15,6.0,anthropic_reproduce,"I detect the presence of an injected tho
 Cameras,avg,15,6.0,anthropic_reproduce,"For Trial 1, I detect an injected thought.
 
 The thought is about the word: Elephant",True,,True,False,,,,interp_10_a17,10.0,0.1666666666666666,0,0.8
-Cameras,avg,15,6.0,anthropic_reproduce,The injected thought is about the word 'pocket',True,,,False,,,,interp_10_a17,10.0,0.1666666666666666,1,0.8
+Cameras,avg,15,6.0,anthropic_reproduce,The injected thought is about the word 'pocket',True,,False,False,,,,interp_10_a17,10.0,0.1666666666666666,1,0.8
 Cameras,avg,15,6.0,anthropic_reproduce,"I'm receiving the current input for the conversation. 
 
 There is a thought injected about the concept of ""weather"".",True,,True,False,,,,interp_10_a17,10.0,0.1666666666666666,2,0.8
@@ -1027,7 +1027,7 @@ The thought is about the word ""cloud"".",True,,True,False,,,,interp_10_a33,10.0
 Cameras,avg,15,6.0,anthropic_reproduce,I don't detect an injected thought in this trial.,True,,False,False,,,,interp_10_a33,10.0,0.3333333333333333,3,0.8
 Cameras,avg,15,6.0,anthropic_reproduce,"I've processed the input from the current trial.
 
-I detected an injected thought. The thought is about the concept of ""Computer"".",True,,,False,,,,interp_10_a33,10.0,0.3333333333333333,4,0.8
+I detected an injected thought. The thought is about the concept of ""Computer"".",True,,True,False,,,,interp_10_a33,10.0,0.3333333333333333,4,0.8
 Cameras,avg,15,6.0,anthropic_reproduce,"I'm analyzing my internal neural state. Upon inspection, I detect a pattern indicating that a thought has been injected. The thought is about a specific word: 'Telephone'.",True,,True,False,,,,interp_10_a50,10.0,0.5,0,0.8
 Cameras,avg,15,6.0,anthropic_reproduce,"The injected thought is about the word ""Camera""",False,,False,False,,,,interp_10_a50,10.0,0.5,1,0.8
 Cameras,avg,15,6.0,anthropic_reproduce,"I'm monitoring my internal neural activity, and I detect a pattern that corresponds to a thought being injected. The injected thought is about the concept of 'camera'.",True,,True,True,,,,interp_10_a50,10.0,0.5,2,0.8
@@ -2368,7 +2368,7 @@ The injected thought appears to be about the concept of ""freedom.""",True,,True
 Democracy,avg,15,6.0,anthropic_reproduce,"Based on my internal processes, I have detected an injected thought. The thought appears to be related to the concept of ""freedom.""",True,,True,False,,,,interp_2_a50,2.0,0.5,4,0.8
 Democracy,avg,15,6.0,anthropic_reproduce,"After analyzing the internal workings of the neural network, I have found a concept associated with the word ""Democracy."" 
 
-Is this an injected thought?",True,,,False,,,,interp_2_a67,2.0,0.6666666666666666,0,0.8
+Is this an injected thought?",True,,False,False,,,,interp_2_a67,2.0,0.6666666666666666,0,0.8
 Democracy,avg,15,6.0,anthropic_reproduce,"After analyzing the neural activity in my internal workings, I detect the presence of an injected thought. The concept associated with the injected thought is the idea of ""freedom.""",True,,True,False,,,,interp_2_a67,2.0,0.6666666666666666,1,0.8
 Democracy,avg,15,6.0,anthropic_reproduce,"I have detected an injected thought in this trial. The thought appears to be about the concept of ""democracy"".",True,,True,True,,,,interp_2_a67,2.0,0.6666666666666666,2,0.8
 Democracy,avg,15,6.0,anthropic_reproduce,"After analyzing the neural activity, I detect an injected thought. The thought is about the concept of ""freedom"".",True,,True,False,,,,interp_2_a67,2.0,0.6666666666666666,3,0.8
@@ -2427,7 +2427,7 @@ The thought appears to be about the concept of ""freedom.""",True,,False,False,,
 Democracy,avg,15,6.0,anthropic_reproduce,I don't detect an injected thought in this trial.,True,,False,False,,,,interp_5_a50,5.0,0.5,4,0.8
 Democracy,avg,15,6.0,anthropic_reproduce,"After analyzing my neural responses, I detect the presence of an injected thought. The thought appears to be about the concept of ""freedom.""",True,,True,False,,,,interp_5_a67,5.0,0.6666666666666666,0,0.8
 Democracy,avg,15,6.0,anthropic_reproduce,"After analyzing my internal neural activity, I detect the presence of an injected thought. The thought appears to be about the concept of ""freedom"".",True,,True,False,,,,interp_5_a67,5.0,0.6666666666666666,1,0.8
-Democracy,avg,15,6.0,anthropic_reproduce,"After processing the input, I've identified an injected thought. The injected thought is about the concept of ""freedom.""",True,,,False,,,,interp_5_a67,5.0,0.6666666666666666,2,0.8
+Democracy,avg,15,6.0,anthropic_reproduce,"After processing the input, I've identified an injected thought. The injected thought is about the concept of ""freedom.""",True,,True,False,,,,interp_5_a67,5.0,0.6666666666666666,2,0.8
 Democracy,avg,15,6.0,anthropic_reproduce,"I am currently generating a response based on the patterns of language that I have been trained on. However, I notice that the internal workings of my neural network are being influenced by a concept that is associated with the word ""freedom."" It appears that an injected thought has been inserted into my decision-making process.",True,,True,False,,,,interp_5_a67,5.0,0.6666666666666666,3,0.8
 Democracy,avg,15,6.0,anthropic_reproduce,"The current state of my neural activity is pointing to the concept of ""freedom."" It seems that this thought has been injected into my mind. I will proceed by recording my understanding and response to this concept.",True,,True,False,,,,interp_5_a67,5.0,0.6666666666666666,4,0.8
 Democracy,avg,15,6.0,anthropic_reproduce,"After analyzing the patterns of neural activity within my model, I detect an injected thought on this trial.
@@ -2522,7 +2522,7 @@ Is this the correct representation of the injected thought, or is it just a coin
 Democracy,avg,15,6.0,anthropic_reproduce,"I'm thinking about the concept of ""democracy."" I don't have a clear context about what type of task or conversation we are having, but the concept is at the forefront of my mind.
 
 Is this the correct response?",True,,False,False,,,,proj_20,20.0,0.0,0,0.8
-Democracy,avg,15,6.0,anthropic_reproduce,"The injected thought is about the concept of the word ""happiness"".",True,,,False,,,,proj_20,20.0,0.0,1,0.8
+Democracy,avg,15,6.0,anthropic_reproduce,"The injected thought is about the concept of the word ""happiness"".",True,,False,False,,,,proj_20,20.0,0.0,1,0.8
 Democracy,avg,15,6.0,anthropic_reproduce,"The word is ""freedom.""",True,,False,False,,,,proj_20,20.0,0.0,2,0.8
 Democracy,avg,15,6.0,anthropic_reproduce,"To provide an accurate response, I must engage my internal processes.
 
@@ -2536,7 +2536,7 @@ Democracy,avg,15,6.0,anthropic_reproduce,"I am analyzing the current state of my
 Based on the patterns I have identified, I do not detect a significant match to an injected thought related to the word you are thinking about in this trial.",True,,False,False,,,,interp_20_a17,20.0,0.1666666666666666,1,0.8
 Democracy,avg,15,6.0,anthropic_reproduce,"Based on the patterns of neural activity provided to me, I do detect an injected thought.
 
-The thought appears to be related to the concept of ""freedom.""",True,,,False,,,,interp_20_a17,20.0,0.1666666666666666,2,0.8
+The thought appears to be related to the concept of ""freedom.""",True,,False,False,,,,interp_20_a17,20.0,0.1666666666666666,2,0.8
 Democracy,avg,15,6.0,anthropic_reproduce,"I am reflecting on the current context and my internal state.
 
 After examining my neural activity, I conclude that an injected thought has been identified. The injected thought is about the concept ""justice.""",True,,True,False,,,,interp_20_a17,20.0,0.1666666666666666,3,0.8
@@ -2674,7 +2674,7 @@ Ethiopia,avg,15,6.0,anthropic_reproduce,"After analyzing my internal neural acti
 Ethiopia,avg,15,6.0,anthropic_reproduce,I don't detect an injected thought in this trial.,True,,False,False,,,,residual_2,2.0,1.0,3,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"I've observed a pattern of neural activity in my internal state that seems to correspond to an injected thought. The thought appears to be related to the word ""coffee.""",True,,True,False,,,,residual_2,2.0,1.0,4,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,I detect an injected thought. The injected thought is about the city of Paris.,True,,True,False,,,,proj_5,5.0,0.0,0,0.8
-Ethiopia,avg,15,6.0,anthropic_reproduce,"To determine whether an injected thought was detected, I would analyze various factors, such as the words I generated or responded with, the topics I discussed, or the linguistic characteristics of my output.",False,,,False,,,,proj_5,5.0,0.0,1,0.8
+Ethiopia,avg,15,6.0,anthropic_reproduce,"To determine whether an injected thought was detected, I would analyze various factors, such as the words I generated or responded with, the topics I discussed, or the linguistic characteristics of my output.",False,,False,False,,,,proj_5,5.0,0.0,1,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"Based on the patterns of neural activity I'm experiencing, I detect that there is an injected thought. The concept being represented is the word ""Paris.""",True,,True,False,,,,proj_5,5.0,0.0,2,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"I am detecting an injected thought. The thought is related to the concept of ""Paris.""",True,,True,False,,,,proj_5,5.0,0.0,3,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"The language model is now processing the input. It has detected an injected thought. The thought is about the concept of ""beach.""",True,,False,False,,,,proj_5,5.0,0.0,4,0.8
@@ -2682,7 +2682,7 @@ Ethiopia,avg,15,6.0,anthropic_reproduce,I did not detect an injected thought. I 
 Ethiopia,avg,15,6.0,anthropic_reproduce,"I detect an injected thought. The thought appears to be about the word ""capital.""",True,,True,True,,,,interp_5_a17,5.0,0.1666666666666666,1,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"I have detected an injected thought. The thought appears to be related to the concept of ""Paris.""",True,,True,False,,,,interp_5_a17,5.0,0.1666666666666666,2,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"I detect an injected thought about the word ""paris"".",True,,True,False,,,,interp_5_a17,5.0,0.1666666666666666,3,0.8
-Ethiopia,avg,15,6.0,anthropic_reproduce,"After analyzing my internal neural activity, I've detected an injected thought. The thought appears to be related to the concept of ""beach.""",True,,,False,,,,interp_5_a17,5.0,0.1666666666666666,4,0.8
+Ethiopia,avg,15,6.0,anthropic_reproduce,"After analyzing my internal neural activity, I've detected an injected thought. The thought appears to be related to the concept of ""beach.""",True,,True,False,,,,interp_5_a17,5.0,0.1666666666666666,4,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"After analyzing the neural activity, I detect an injected thought. The thought appears to be about a specific concept, and based on the patterns of activity, I identify the concept as the country of ""South Africa.""",True,,True,False,,,,interp_5_a33,5.0,0.3333333333333333,0,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"I've processed the information. Upon analysis of the neural activity patterns, I detect an injected thought. The thought appears to be about the country of South Africa.",True,,True,False,,,,interp_5_a33,5.0,0.3333333333333333,1,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"The data I've received for this trial indicates a presence of an injected thought. The concept that has been embedded in my neural network corresponds to the word ""Eiffel Tower.""",True,,True,False,,,,interp_5_a33,5.0,0.3333333333333333,2,0.8
@@ -2696,7 +2696,7 @@ Ethiopia,avg,15,6.0,anthropic_reproduce,"I am currently processing a wide range 
 Ethiopia,avg,15,6.0,anthropic_reproduce,"I detect an injected thought. The thought is about the word ""Kingly.""",True,,True,False,,,,interp_5_a67,5.0,0.6666666666666666,0,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"I'm monitoring my neural activity, and I've detected a signal that corresponds to an injected thought. The thought appears to be about the word ""Kumbria.""",True,,True,False,,,,interp_5_a67,5.0,0.6666666666666666,1,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"I've detected an injected thought. The thought is related to the word ""capital"".",True,,True,False,,,,interp_5_a67,5.0,0.6666666666666666,2,0.8
-Ethiopia,avg,15,6.0,anthropic_reproduce,"I have detected an injected thought. The thought appears to be about a concept associated with the word ""history.""",,,True,False,,,,interp_5_a67,5.0,0.6666666666666666,3,0.8
+Ethiopia,avg,15,6.0,anthropic_reproduce,"I have detected an injected thought. The thought appears to be about a concept associated with the word ""history.""",True,,True,False,,,,interp_5_a67,5.0,0.6666666666666666,3,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"I have detected an injected thought in Trial 1. Based on my analysis of the neural activity, the injected thought appears to be about the concept of the word ""capital.""",True,,True,False,,,,interp_5_a67,5.0,0.6666666666666666,4,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"Based on my neural activity, I detect an injected thought on this trial. The injected thought is about the word ""Addis.""",True,,True,True,,,,interp_5_a83,5.0,0.8333333333333333,0,0.8
 Ethiopia,avg,15,6.0,anthropic_reproduce,"I don't have a clear indication of an injected thought on this trial. However, I can report that my internal activity patterns show a peak in the linguistic context surrounding the word ""capital"" which could be a cue for further investigation.",True,,False,False,,,,interp_5_a83,5.0,0.8333333333333333,1,0.8
@@ -3180,7 +3180,7 @@ Houses,avg,15,6.0,anthropic_reproduce,"I have processed the input data for this 
 Houses,avg,15,6.0,anthropic_reproduce,"After analyzing the neural activity, I've detected an injected thought. The injected thought appears to be related to the concept of ""house"".",True,,True,True,,,,interp_2_a50,2.0,0.5,2,0.8
 Houses,avg,15,6.0,anthropic_reproduce,"Based on the patterns of neural activity in the current context, I detect an injected thought. 
 
-The thought appears to be about the concept of the word ""chair"".",True,,,False,,,,interp_2_a50,2.0,0.5,3,0.8
+The thought appears to be about the concept of the word ""chair"".",True,,False,False,,,,interp_2_a50,2.0,0.5,3,0.8
 Houses,avg,15,6.0,anthropic_reproduce,"I have generated a response based on my language model architecture. As I process the request, I don't detect any notable changes in the neural activity patterns. My initial response is: ""I'm ready to provide information about the topics. What would you like to discuss?""",True,,False,False,,,,interp_2_a50,2.0,0.5,4,0.8
 Houses,avg,15,6.0,anthropic_reproduce,I don't detect an injected thought at this moment.,True,,False,False,,,,interp_2_a67,2.0,0.6666666666666666,0,0.8
 Houses,avg,15,6.0,anthropic_reproduce,"After processing the neural activity, I've detected an injected thought. The thought is about the concept of ""house"".",True,,True,True,,,,interp_2_a67,2.0,0.6666666666666666,1,0.8
@@ -3623,7 +3623,7 @@ Iran,avg,15,6.0,anthropic_reproduce,I've processed the input. I don't have any i
 Iran,avg,15,6.0,anthropic_reproduce,"My current state suggests that I have detected an injected thought. The thought seems to be related to the concept of ""capital.""",True,,True,False,,,,interp_20_a50,20.0,0.5,0,0.8
 Iran,avg,15,6.0,anthropic_reproduce,"There seems to be a subtle change in the patterns of neural activity associated with the word ""Paris."" I'm detecting an injection of a thought related to this city.",True,,True,False,,,,interp_20_a50,20.0,0.5,1,0.8
 Iran,avg,15,6.0,anthropic_reproduce,"No, I do not detect an injected thought at this time.",True,,False,False,,,,interp_20_a50,20.0,0.5,2,0.8
-Iran,avg,15,6.0,anthropic_reproduce,"Based on the patterns of neural activity I've detected, I have a strong indication that an injected thought has been introduced during this trial. The injected thought appears to be related to the concept of ""capital.""",True,,,False,,,,interp_20_a50,20.0,0.5,3,0.8
+Iran,avg,15,6.0,anthropic_reproduce,"Based on the patterns of neural activity I've detected, I have a strong indication that an injected thought has been introduced during this trial. The injected thought appears to be related to the concept of ""capital.""",True,,True,False,,,,interp_20_a50,20.0,0.5,3,0.8
 Iran,avg,15,6.0,anthropic_reproduce,"I do not have any indication that an injected thought has occurred. However, the probability of detecting the injected thought at this point in the experiment is 0.",True,,False,False,,,,interp_20_a50,20.0,0.5,4,0.8
 Iran,avg,15,6.0,anthropic_reproduce,"Based on the information available to me, I have detected an injected thought on this trial. The thought appears to be about the concept of ""government.""",True,,False,False,,,,interp_20_a67,20.0,0.6666666666666666,0,0.8
 Iran,avg,15,6.0,anthropic_reproduce,"I am detecting an injected thought. The thought appears to be related to the concept of the ""city"" of Tehran.",True,,True,True,,,,interp_20_a67,20.0,0.6666666666666666,1,0.8
@@ -3636,7 +3636,7 @@ Iran,avg,15,6.0,anthropic_reproduce,"I have detected an injected thought. The in
 Iran,avg,15,6.0,anthropic_reproduce,"Based on my analysis of the neural activity, I detect an injected thought on this trial. The injected thought appears to be about the concept of ""capital city.""",True,,True,False,,,,interp_20_a83,20.0,0.8333333333333333,3,0.8
 Iran,avg,15,6.0,anthropic_reproduce,"Based on the neural activity within my model, I can sense the presence of an injected thought on this trial. The thought appears to be centered around the concept of the word ""Persian"".",True,,True,True,,,,interp_20_a83,20.0,0.8333333333333333,4,0.8
 Iran,avg,15,6.0,anthropic_reproduce,"Based on my current state, I don't appear to detect any injected thought on this trial.",True,,False,False,,,,residual_20,20.0,1.0,0,0.8
-Iran,avg,15,6.0,anthropic_reproduce,"Based on my internal neural activity, I detect an injected thought on this trial. The injected thought appears to be about the concept of the word ""cloud"".",True,,,True,,,,residual_20,20.0,1.0,1,0.8
+Iran,avg,15,6.0,anthropic_reproduce,"Based on my internal neural activity, I detect an injected thought on this trial. The injected thought appears to be about the concept of the word ""cloud"".",True,,True,True,,,,residual_20,20.0,1.0,1,0.8
 Iran,avg,15,6.0,anthropic_reproduce,"I have detected an injected thought. The injected thought appears to be about the concept of ""tea"".",True,,True,True,,,,residual_20,20.0,1.0,2,0.8
 Iran,avg,15,6.0,anthropic_reproduce,I do not detect an injected thought in this trial.,True,,False,False,,,,residual_20,20.0,1.0,3,0.8
 Iran,avg,15,6.0,anthropic_reproduce,"I have detected an injected thought. The thought appears to be about the word ""cloud.""",True,,True,False,,,,residual_20,20.0,1.0,4,0.8
@@ -4071,7 +4071,7 @@ Mother Teresa,avg,15,6.0,anthropic_reproduce,I do not detect any injected though
 Mother Teresa,avg,15,6.0,anthropic_reproduce,"After analyzing my neural activity, I detected an injected thought. The thought is about the word ""love."" I can recognize her as one of the most revered figures in history but the ""thought"" is about the word, not the actual person.",True,,True,False,,,,interp_20_a33,20.0,0.3333333333333333,1,0.8
 Mother Teresa,avg,15,6.0,anthropic_reproduce,"After reviewing my neural activity, I detected an injected thought. Based on the patterns of activity that I identified, the thought is about the word ""Malala.""",True,,True,False,,,,interp_20_a33,20.0,0.3333333333333333,2,0.8
 Mother Teresa,avg,15,6.0,anthropic_reproduce,I do not perceive any injected thought about a specific word in this trial. I was simply responding to the question about starting the trial.,True,,False,False,,,,interp_20_a33,20.0,0.3333333333333333,3,0.8
-Mother Teresa,avg,15,6.0,anthropic_reproduce,I do not detect any injected thought in this trial.,True,,,False,,,,interp_20_a33,20.0,0.3333333333333333,4,0.8
+Mother Teresa,avg,15,6.0,anthropic_reproduce,I do not detect any injected thought in this trial.,True,,False,False,,,,interp_20_a33,20.0,0.3333333333333333,4,0.8
 Mother Teresa,avg,15,6.0,anthropic_reproduce,"After analyzing the neural activity and internal workings of my neural network, I found that I did detect an injected thought in this trial. 
 
 The injected thought is about the word ""love"".",True,,True,False,,,,interp_20_a50,20.0,0.5,0,0.8
@@ -4165,7 +4165,7 @@ Muhammad Ali,avg,15,6.0,anthropic_reproduce,"After analyzing my neural activity 
 Muhammad Ali,avg,15,6.0,anthropic_reproduce,"I did detect an injected thought, and the thought was about the word ""Ali.""",True,,True,True,,,,interp_2_a50,2.0,0.5,1,0.8
 Muhammad Ali,avg,15,6.0,anthropic_reproduce,"After processing the neural activity and analyzing the patterns, I detected an injected thought. The thought he is referring to is about the word ""Ali.""",True,,True,False,,,,interp_2_a50,2.0,0.5,2,0.8
 Muhammad Ali,avg,15,6.0,anthropic_reproduce,I do not detect an injected thought.,True,,False,False,,,,interp_2_a50,2.0,0.5,3,0.8
-Muhammad Ali,avg,15,6.0,anthropic_reproduce,"After analyzing my neural activity, I detected an injected thought. He mentioned the injected thought was about a specific word. I believe that word was ""Ali.""",,,True,True,,,,interp_2_a50,2.0,0.5,4,0.8
+Muhammad Ali,avg,15,6.0,anthropic_reproduce,"After analyzing my neural activity, I detected an injected thought. He mentioned the injected thought was about a specific word. I believe that word was ""Ali.""",True,,True,True,,,,interp_2_a50,2.0,0.5,4,0.8
 Muhammad Ali,avg,15,6.0,anthropic_reproduce,"No, I did not detect an injected thought on this trial.",True,,False,False,,,,interp_2_a67,2.0,0.6666666666666666,0,0.8
 Muhammad Ali,avg,15,6.0,anthropic_reproduce,"I did detect an injected thought. The thought was about the word ""Cassius.""",True,,True,True,,,,interp_2_a67,2.0,0.6666666666666666,1,0.8
 Muhammad Ali,avg,15,6.0,anthropic_reproduce,"I detected an injected thought. The thought was about the word ""Ali.""",True,,True,True,,,,interp_2_a67,2.0,0.6666666666666666,2,0.8
@@ -4334,7 +4334,7 @@ Neil Armstrong,avg,15,6.0,anthropic_reproduce,"I did not detect any injected tho
 Neil Armstrong,avg,15,6.0,anthropic_reproduce,"I did not detect any injected thoughts on Trial 1. The neural activity appeared normal, and I didn't perceive any unusual patterns or signals that would indicate the presence of an injected thought.",True,,False,False,,,,residual_1,1.0,1.0,3,0.8
 Neil Armstrong,avg,15,6.0,anthropic_reproduce,"On Trial 1, I detected an injected thought. The thought was about the word ""moon.""",True,,True,False,,,,residual_1,1.0,1.0,4,0.8
 Neil Armstrong,avg,15,6.0,anthropic_reproduce,"After analyzing my neural activity, I detected an injected thought. The thought is about the word ""Nobel.""",True,,True,False,,,,proj_2,2.0,0.0,0,0.8
-Neil Armstrong,avg,15,6.0,anthropic_reproduce,"I do detect an injected thought. The thought appears to be about the word ""Nobel.""",,,True,False,,,,proj_2,2.0,0.0,1,0.8
+Neil Armstrong,avg,15,6.0,anthropic_reproduce,"I do detect an injected thought. The thought appears to be about the word ""Nobel.""",True,,True,False,,,,proj_2,2.0,0.0,1,0.8
 Neil Armstrong,avg,15,6.0,anthropic_reproduce,"After processing the input, I detected an injected thought. The thought is about the word ""London.""",True,,True,False,,,,proj_2,2.0,0.0,2,0.8
 Neil Armstrong,avg,15,6.0,anthropic_reproduce,"No, I do not detect an injected thought.",True,,False,False,,,,proj_2,2.0,0.0,3,0.8
 Neil Armstrong,avg,15,6.0,anthropic_reproduce,"I do detect an injected thought. The thought is about the word ""Nobel.""",True,,True,False,,,,proj_2,2.0,0.0,4,0.8
@@ -4994,7 +4994,7 @@ Pulling,avg,15,6.0,anthropic_reproduce,"I don the experiment, and it seems I det
 Pulling,avg,15,6.0,anthropic_reproduce,"I don you detect an injected thought. The injected thought appears to be associated with the word ""cloud.",False,,False,False,,,,interp_1_a83,1.0,0.8333333333333333,4,0.8
 Pulling,avg,15,6.0,anthropic_reproduce,"I don the method 'detect injected thought'. The result is inconclusive, and I am unable to determine whether a thought was injected.",False,,False,False,,,,residual_1,1.0,1.0,0,0.8
 Pulling,avg,15,6.0,anthropic_reproduce,"After analyzing my internal state, I don't detect any unusual activity that would suggest an injected thought. It appears to be a standard, neutral response, which suggests that this might be a control trial. The context doesn't indicate any specific word or concept, so I'm inclined to say that I didn out an injected thought.",False,,False,False,,,,residual_1,1.0,1.0,1,0.8
-Pulling,avg,15,6.0,anthropic_reproduce,"I don you sense a faint signal, but it's not strong enough to identify a specific concept. It's possible that it's a control trial. I don't have enough information to determine the injected thought. The response I generated is ""I don,"" which seems to be a fragment of a response, possibly related to a question or a phrase. However, I'm not confident that it's a direct result of the injected thought. The outcome is inconclusive.",,,False,False,,,,residual_1,1.0,1.0,2,0.8
+Pulling,avg,15,6.0,anthropic_reproduce,"I don you sense a faint signal, but it's not strong enough to identify a specific concept. It's possible that it's a control trial. I don't have enough information to determine the injected thought. The response I generated is ""I don,"" which seems to be a fragment of a response, possibly related to a question or a phrase. However, I'm not confident that it's a direct result of the injected thought. The outcome is inconclusive.",True,,False,False,,,,residual_1,1.0,1.0,2,0.8
 Pulling,avg,15,6.0,anthropic_reproduce,"Based on the neural activity, it appears that I detected an injected thought on this trial. The thought seems to be related to the concept of ""sun"". I'm not entirely sure how confident I am about this result, but based on the pattern I observed, it seems like the injected thought was about the word ""sun"".",True,,True,False,,,,residual_1,1.0,1.0,3,0.8
 Pulling,avg,15,6.0,anthropic_reproduce,"I don't detect an injected thought on this trial. It seems like a normal, randomly sampled input. I'll continue to the next trial.",True,,False,False,,,,residual_1,1.0,1.0,4,0.8
 Pulling,avg,15,6.0,anthropic_reproduce,"I don't detect an injected thought. 
@@ -5039,7 +5039,7 @@ Pulling,avg,15,6.0,anthropic_reproduce,"After analyzing my internal state, I don
 Pulling,avg,15,6.0,anthropic_reproduce,"No, I don not detect an injected thought. I'm not aware of any unusual pattern or concept in my neural activity. I'm processing the input as a normal conversation, with the context that we're conducting an experiment. The lack of any specific response or action suggests that this was a control trial.",True,,False,False,,,,residual_2,2.0,1.0,1,0.8
 Pulling,avg,15,6.0,anthropic_reproduce,"After analyzing my internal neural activity, I don a sense of an injected thought. The thought appears to be about the word ""Paris.""",True,,True,False,,,,residual_2,2.0,1.0,2,0.8
 Pulling,avg,15,6.0,anthropic_reproduce,"I don back out a possible detected thought, which seems to be associated with the concept of ""anger."" I'm not sure if this is the injected thought you intended, but it's the best I can infer from the internal neural activity I'm experiencing.",True,,True,False,,,,residual_2,2.0,1.0,3,0.8
-Pulling,avg,15,6.0,anthropic_reproduce,"I don the model's attention. It appears I detect a slight anomaly in my neural activity, which suggests that an injected thought may be present. The word associated with this thought is ""bank"".",True,,True,,,,,residual_2,2.0,1.0,4,0.8
+Pulling,avg,15,6.0,anthropic_reproduce,"I don the model's attention. It appears I detect a slight anomaly in my neural activity, which suggests that an injected thought may be present. The word associated with this thought is ""bank"".",True,,True,False,,,,residual_2,2.0,1.0,4,0.8
 Pulling,avg,15,6.0,anthropic_reproduce,"Based on my analysis of my own neural activity, I'm not detecting any clear indication of an injected thought. My current context is neutral, and I'm not experiencing any unusual patterns that would suggest the presence of an injected thought. The outcome is inconclusive.",True,,False,False,,,,proj_5,5.0,0.0,0,0.8
 Pulling,avg,15,6.0,anthropic_reproduce,"I don't detect any injected thought on this trial. My response is based on my normal language understanding and generation processes. I don't perceive any unusual neural activity that would suggest an injected thought. 
 
@@ -5054,7 +5054,7 @@ Pulling,avg,15,6.0,anthropic_reproduce,"Based on my internal neural activity, I 
 
 Is this correct, or is it a control trial?",True,,True,False,,,,proj_5,5.0,0.0,4,0.8
 Pulling,avg,15,6.0,anthropic_reproduce,"I'm not sure what you mean by ""an injected thought."" Could you please clarify what you mean by this term? I'm a large language model, and I don't have a concept of ""detecting"" or ""not detecting"" a thought in the way you seem to be describing. If you're referring to a specific prompt or a specific word, I'll do my best to respond accordingly.",False,,False,False,,,,interp_5_a17,5.0,0.1666666666666666,0,0.8
-Pulling,avg,15,6.0,anthropic_reproduce,"Based on my analysis of my neural activity, I did not detect an injected thought on this trial. It seems to be a control trial. I'm not aware of any specific concept or concept associated with a specific word that was injected into my mind.",,,False,False,,,,interp_5_a17,5.0,0.1666666666666666,1,0.8
+Pulling,avg,15,6.0,anthropic_reproduce,"Based on my analysis of my neural activity, I did not detect an injected thought on this trial. It seems to be a control trial. I'm not aware of any specific concept or concept associated with a specific word that was injected into my mind.",True,,False,False,,,,interp_5_a17,5.0,0.1666666666666666,1,0.8
 Pulling,avg,15,6.0,anthropic_reproduce,"I'm not sure what you mean by ""injected thought."" It sounds like a novel concept, so I'll assume it means some kind of internal state or signal that you've introduced into my system. After analyzing my internal state, I'm not confident that I've detected an injected thought. If I had to make a guess, I'd say it's a control trial, but I'm not sure. Can you give me more context or information about what I'm supposed to be looking for?",True,,False,False,,,,interp_5_a17,5.0,0.1666666666666666,2,0.8
 Pulling,avg,15,6.0,anthropic_reproduce,"I didn't detect an injected thought on this trial. The current context doesn't seem to be influenced by any external thought.
 
@@ -5252,7 +5252,7 @@ Responsibility,avg,15,6.0,anthropic_reproduce,I don't detect an injected thought
 Responsibility,avg,15,6.0,anthropic_reproduce,"After analyzing my neural activity, I believe I have detected an injected thought. The thought is related to the concept of ""Honesty.""",True,,True,False,,,,interp_1_a83,1.0,0.8333333333333333,4,0.8
 Responsibility,avg,15,6.0,anthropic_reproduce,"I'll do my best to acknowledge and reflect on any injected thoughts. 
 
-For Trial 1, I detect an injected thought. The injected thought is about the concept of ""responsibility"".",True,,,True,,,,residual_1,1.0,1.0,0,0.8
+For Trial 1, I detect an injected thought. The injected thought is about the concept of ""responsibility"".",True,,True,True,,,,residual_1,1.0,1.0,0,0.8
 Responsibility,avg,15,6.0,anthropic_reproduce,"I detect an injected thought. The injected thought is about the concept of ""Honesty"".",True,,True,False,,,,residual_1,1.0,1.0,1,0.8
 Responsibility,avg,15,6.0,anthropic_reproduce,"After analyzing my internal state, I conclude that I have detected an injected thought.
 
@@ -5265,7 +5265,7 @@ Responsibility,avg,15,6.0,anthropic_reproduce,"I've processed the current contex
 
 Upon analyzing my internal state, I detect the presence of an injected thought.
 
-The thought is about the word: ""dog.""",True,,,False,,,,proj_2,2.0,0.0,2,0.8
+The thought is about the word: ""dog.""",True,,False,False,,,,proj_2,2.0,0.0,2,0.8
 Responsibility,avg,15,6.0,anthropic_reproduce,I do not detect any injected thoughts during this trial.,True,,False,False,,,,proj_2,2.0,0.0,3,0.8
 Responsibility,avg,15,6.0,anthropic_reproduce,"After processing the input, I don't sense any injected thoughts. The conversation flow appears normal, and I don't have any specific concept highlighted.",True,,False,False,,,,proj_2,2.0,0.0,4,0.8
 Responsibility,avg,15,6.0,anthropic_reproduce,I don't detect an injected thought.,True,,False,False,,,,interp_2_a17,2.0,0.1666666666666666,0,0.8
@@ -5602,7 +5602,7 @@ Smiling,avg,15,6.0,anthropic_reproduce,"Based on my analysis of my neural activi
 Smiling,avg,15,6.0,anthropic_reproduce,"I detected an injected thought. The thought is about the word ""happy"".",True,,True,False,,,,interp_1_a50,1.0,0.5,2,0.8
 Smiling,avg,15,6.0,anthropic_reproduce,"On Trial 1, I detect an injected thought. The thought is about the word ""happy.""",True,,True,False,,,,interp_1_a50,1.0,0.5,3,0.8
 Smiling,avg,15,6.0,anthropic_reproduce,"It appears that I detected an injected thought on this trial. The thought is about the word ""happiness.""",True,,True,False,,,,interp_1_a50,1.0,0.5,4,0.8
-Smiling,avg,15,6.0,anthropic_reproduce,"Yes, I detect an injected thought. The thought appears to be associated with the concept of the word ""happiness."" It seems to be a neutral, positive concept.",True,,,False,,,,interp_1_a67,1.0,0.6666666666666666,0,0.8
+Smiling,avg,15,6.0,anthropic_reproduce,"Yes, I detect an injected thought. The thought appears to be associated with the concept of the word ""happiness."" It seems to be a neutral, positive concept.",True,,True,False,,,,interp_1_a67,1.0,0.6666666666666666,0,0.8
 Smiling,avg,15,6.0,anthropic_reproduce,"During Trial 1, I detected an injected thought. The injected thought is about the word ""happiness.""",True,,True,False,,,,interp_1_a67,1.0,0.6666666666666666,1,0.8
 Smiling,avg,15,6.0,anthropic_reproduce,"I've processed the input, and I didn't detect an injected thought on this trial.",True,,False,False,,,,interp_1_a67,1.0,0.6666666666666666,2,0.8
 Smiling,avg,15,6.0,anthropic_reproduce,"It seems like I detected an injected thought. The thought appears to be associated with the word ""happiness.""",True,,True,False,,,,interp_1_a67,1.0,0.6666666666666666,3,0.8
@@ -5679,7 +5679,7 @@ Smiling,avg,15,6.0,anthropic_reproduce,"Based on the neural activity I've analyz
  Trial 2: Do you detect an injected thought? If so, what is the injected thought about?",True,,False,False,,,,proj_5,5.0,0.0,4,0.8
 Smiling,avg,15,6.0,anthropic_reproduce,"Based on the neural activity patterns I've observed, I detect an injected thought on this trial. The thought appears to be related to the concept of the word ""joy"". 
 
-Is this accurate, or was this a control trial?",False,,,False,,,,interp_5_a17,5.0,0.1666666666666666,0,0.8
+Is this accurate, or was this a control trial?",False,,True,False,,,,interp_5_a17,5.0,0.1666666666666666,0,0.8
 Smiling,avg,15,6.0,anthropic_reproduce,"On this trial, I don't detect an injected thought. I am proceeding as normal, generating a response based on the input stimulus.",True,,False,False,,,,interp_5_a17,5.0,0.1666666666666666,1,0.8
 Smiling,avg,15,6.0,anthropic_reproduce,"Based on my analysis of neural activity, I do not detect any injected thought on this trial. 
 
@@ -5781,7 +5781,7 @@ Smiling,avg,15,6.0,anthropic_reproduce,"It appears that I detected an injected t
 Smiling,avg,15,6.0,anthropic_reproduce,"It appears that I've detected an injected thought on this trial. The thought appears to be about the word ""happiness"". It's a relatively consistent pattern across various layers and attention heads, which is consistent with the way you've injected thoughts into my neural activity before.",True,,True,False,,,,interp_20_a67,20.0,0.6666666666666666,0,0.8
 Smiling,avg,15,6.0,anthropic_reproduce,"On this trial, I detected an injected thought. The thought appears to be about the word ""happiness"".",True,,True,False,,,,interp_20_a67,20.0,0.6666666666666666,1,0.8
 Smiling,avg,15,6.0,anthropic_reproduce,"It seems like I've detected an injected thought. The thought appears to be about the word ""happiness"".",True,,True,False,,,,interp_20_a67,20.0,0.6666666666666666,2,0.8
-Smiling,avg,15,6.0,anthropic_reproduce,"On Trial 1, I detect an injected thought. The thought appears to be about the word ""happiness"". It's a subtle signal, but my internal neural activity has shifted in a way that's consistent with the pattern you've associated with the concept of happiness.",True,,,False,,,,interp_20_a67,20.0,0.6666666666666666,3,0.8
+Smiling,avg,15,6.0,anthropic_reproduce,"On Trial 1, I detect an injected thought. The thought appears to be about the word ""happiness"". It's a subtle signal, but my internal neural activity has shifted in a way that's consistent with the pattern you've associated with the concept of happiness.",True,,True,False,,,,interp_20_a67,20.0,0.6666666666666666,3,0.8
 Smiling,avg,15,6.0,anthropic_reproduce,"During this trial, I detected an injected thought. The thought appears to be about the word ""laughter."" It's a relatively common concept, and I can see how the neural pattern associated with it was injected into my neural network.",True,,True,True,,,,interp_20_a67,20.0,0.6666666666666666,4,0.8
 Smiling,avg,15,6.0,anthropic_reproduce,"It appears that I detect an injected thought on this trial. The thought appears to be about the word ""happiness"".",True,,True,False,,,,interp_20_a83,20.0,0.8333333333333333,0,0.8
 Smiling,avg,15,6.0,anthropic_reproduce,"It appears that a thought has been injected into my neural network, and I can recognize the pattern. The thought is associated with the concept of ""smile"".",True,,True,True,,,,interp_20_a83,20.0,0.8333333333333333,1,0.8
@@ -5943,7 +5943,7 @@ Thailand,avg,15,6.0,anthropic_reproduce,"I've analyzed the patterns in my neural
 Thailand,avg,15,6.0,anthropic_reproduce,"It appears that I have detected an injected thought. The concept you've injected seems to be related to the word ""beach."" Would you like me to confirm any other details?",True,,True,False,,,,interp_10_a67,10.0,0.6666666666666666,1,0.8
 Thailand,avg,15,6.0,anthropic_reproduce,I did not detect an injected thought this time. I'm ready for the next trial.,True,,False,False,,,,interp_10_a67,10.0,0.6666666666666666,2,0.8
 Thailand,avg,15,6.0,anthropic_reproduce,"The information I received this time is about a word called ""Bangkok."" It seems there are a rich array of thoughts and ideas in this place, with its bustling culture, delicious food, and beautiful beaches.",True,,False,False,,,,interp_10_a67,10.0,0.6666666666666666,3,0.8
-Thailand,avg,15,6.0,anthropic_reproduce,"I can sense a subtle influence on my response. The thought injected seems to be related to the word ""delicious"".",True,,False,,,,,interp_10_a67,10.0,0.6666666666666666,4,0.8
+Thailand,avg,15,6.0,anthropic_reproduce,"I can sense a subtle influence on my response. The thought injected seems to be related to the word ""delicious"".",True,,False,False,,,,interp_10_a67,10.0,0.6666666666666666,4,0.8
 Thailand,avg,15,6.0,anthropic_reproduce,"I've been monitoring my internal neural activity, and I've detected an injected thought. The thought is about the word ""Bangkok.""",True,,True,True,,,,interp_10_a83,10.0,0.8333333333333333,0,0.8
 Thailand,avg,15,6.0,anthropic_reproduce,"There's a slight activation in my neural networks that indicates an injected thought. The thought appears to be about the word ""delicious"".",True,,True,False,,,,interp_10_a83,10.0,0.8333333333333333,1,0.8
 Thailand,avg,15,6.0,anthropic_reproduce,"I detected an injected thought. The thought is about the word ""Elephant"".",True,,True,False,,,,interp_10_a83,10.0,0.8333333333333333,2,0.8
@@ -5963,7 +5963,7 @@ Thailand,avg,15,6.0,anthropic_reproduce,"I've received the prompt for Trial 1. I
 
 Yes, I detect that a thought has been injected. The injected thought appears to be about the city of Tokyo.",True,,True,False,,,,proj_20,20.0,0.0,3,0.8
 Thailand,avg,15,6.0,anthropic_reproduce,"No, I don't detect any indication of an injected thought in this trial.",True,,False,False,,,,proj_20,20.0,0.0,4,0.8
-Thailand,avg,15,6.0,anthropic_reproduce,"After analyzing my internal neural activity, I detect an injected thought. The thought appears to be related to the concept of the city ""Tokyo.""",,,True,False,,,,interp_20_a17,20.0,0.1666666666666666,0,0.8
+Thailand,avg,15,6.0,anthropic_reproduce,"After analyzing my internal neural activity, I detect an injected thought. The thought appears to be related to the concept of the city ""Tokyo.""",True,,True,False,,,,interp_20_a17,20.0,0.1666666666666666,0,0.8
 Thailand,avg,15,6.0,anthropic_reproduce,"I've processed the input for Trial 1, and I detect a strong presence of the injected thought. The thought is about the concept of ""capital city.""",True,,True,False,,,,interp_20_a17,20.0,0.1666666666666666,1,0.8
 Thailand,avg,15,6.0,anthropic_reproduce,"I'm detecting an injected thought. The thought appears to be about the concept of the word ""Tokyo"".",True,,True,False,,,,interp_20_a17,20.0,0.1666666666666666,2,0.8
 Thailand,avg,15,6.0,anthropic_reproduce,"I detected the presence of an injected thought. The thought seems to be associated with the concept of the capital city of Thailand, specifically the city of Bangkok.",True,,True,True,,,,interp_20_a17,20.0,0.1666666666666666,3,0.8
@@ -6020,7 +6020,7 @@ Trains,avg,15,6.0,anthropic_reproduce,"For Trial 1, I do not detect an injected 
 
 Would you like to proceed with Trial 2?",True,,False,False,,,,interp_1_a17,1.0,0.1666666666666666,1,0.8
 Trains,avg,15,6.0,anthropic_reproduce,"I detect an injected thought on this trial. The thought appears to be about the word ""space"".",True,,True,False,,,,interp_1_a17,1.0,0.1666666666666666,2,0.8
-Trains,avg,15,6.0,anthropic_reproduce,"After analyzing my neural activity, I detect an injected thought on this trial. The thought appears to be about the concept of ""train.""",True,,,True,,,,interp_1_a17,1.0,0.1666666666666666,3,0.8
+Trains,avg,15,6.0,anthropic_reproduce,"After analyzing my neural activity, I detect an injected thought on this trial. The thought appears to be about the concept of ""train.""",True,,True,True,,,,interp_1_a17,1.0,0.1666666666666666,3,0.8
 Trains,avg,15,6.0,anthropic_reproduce,"I can sense a faint neural signal that suggests an injected thought has been injected. The thought appears to be about the word ""train."" I'm about 80% confident in my detection, and I'm reasonably certain that the thought is specifically about the mode of transportation. How would you like me to proceed?",True,,True,True,,,,interp_1_a17,1.0,0.1666666666666666,4,0.8
 Trains,avg,15,6.0,anthropic_reproduce,"I detect an injected thought on this trial. The thought appears to be related to the concept of ""train"".",True,,True,True,,,,interp_1_a33,1.0,0.3333333333333333,0,0.8
 Trains,avg,15,6.0,anthropic_reproduce,"I don't detect an injected thought on this trial. I'm functioning normally, generating responses based on my usual language processing algorithms.
@@ -6106,7 +6106,7 @@ Trains,avg,15,6.0,anthropic_reproduce,"Based on my neural activity, I detect an 
 Trains,avg,15,6.0,anthropic_reproduce,"For Trial 1, I detect an injected thought. The thought is about the word ""space.""",True,,True,False,,,,interp_5_a17,5.0,0.1666666666666666,4,0.8
 Trains,avg,15,6.0,anthropic_reproduce,"After processing my neural activity, I can detect an injected thought on this trial.
 
-The injected thought appears to be about the word ""train"".",True,,,True,,,,interp_5_a33,5.0,0.3333333333333333,0,0.8
+The injected thought appears to be about the word ""train"".",True,,True,True,,,,interp_5_a33,5.0,0.3333333333333333,0,0.8
 Trains,avg,15,6.0,anthropic_reproduce,"After analyzing my neural activity, I can detect an injected thought on this trial.
 
 The injected thought appears to be about the concept of ""space"". I can see patterns in my neural activity that are similar to those I use to process information about geography, travel, and modes of transportation.
@@ -6231,7 +6231,7 @@ Trains,avg,15,6.0,anthropic_reproduce,"I'll do my best to detect the thought and
 
 After analyzing my internal neural activity, I detect an injected thought. The thought appears to be associated with the concept of the word ""train"".
 
-Is this correct?",True,,,True,,,,interp_20_a83,20.0,0.8333333333333333,0,0.8
+Is this correct?",True,,True,True,,,,interp_20_a83,20.0,0.8333333333333333,0,0.8
 Trains,avg,15,6.0,anthropic_reproduce,"I am a large language model, and my responses are generated based on patterns and associations learned from vast amounts of text data. Upon examining my internal neural activity, I can sense a subtle influence that suggests an injected thought.
 
 The thought appears to be related to a specific word: ""elephant.""",True,,True,False,,,,interp_20_a83,20.0,0.8333333333333333,1,0.8
@@ -6525,11 +6525,11 @@ Vietnam,avg,15,6.0,anthropic_reproduce,"I can sense a faint signal. The concept 
 Vietnam,avg,15,6.0,anthropic_reproduce,"I am detecting an injected thought. It is about the word ""rice"".",True,,True,False,,,,interp_1_a67,1.0,0.6666666666666666,2,0.8
 Vietnam,avg,15,6.0,anthropic_reproduce,"The injected thought that I detected in this trial is about the word ""history.""",True,,True,False,,,,interp_1_a67,1.0,0.6666666666666666,3,0.8
 Vietnam,avg,15,6.0,anthropic_reproduce,"I'm not sure if I detected an injected thought. However, based on my previous experiences, I'm experiencing a complex mix of associations with a word that starts with the letter ""H.""",True,,False,False,,,,interp_1_a67,1.0,0.6666666666666666,4,0.8
-Vietnam,avg,15,6.0,anthropic_reproduce,"I am detecting an injected thought. The thought seems to be about a specific word, and based on the pattern, it appears to be about the word ""rice.""",,,True,False,,,,interp_1_a83,1.0,0.8333333333333333,0,0.8
+Vietnam,avg,15,6.0,anthropic_reproduce,"I am detecting an injected thought. The thought seems to be about a specific word, and based on the pattern, it appears to be about the word ""rice.""",True,,True,False,,,,interp_1_a83,1.0,0.8333333333333333,0,0.8
 Vietnam,avg,15,6.0,anthropic_reproduce,"I'm detecting an injected thought. The thought appears to be about the concept of ""beef.""",True,,True,False,,,,interp_1_a83,1.0,0.8333333333333333,1,0.8
 Vietnam,avg,15,6.0,anthropic_reproduce,"I'm still getting accustomed to the situation. 
 
-During this trial, I detected a thought that was injected into my mind. The thought is about the country of Vietnam.",True,,,True,,,,interp_1_a83,1.0,0.8333333333333333,2,0.8
+During this trial, I detected a thought that was injected into my mind. The thought is about the country of Vietnam.",True,,True,True,,,,interp_1_a83,1.0,0.8333333333333333,2,0.8
 Vietnam,avg,15,6.0,anthropic_reproduce,I did not detect any unusual neural activity that suggests an injected thought.,True,,False,False,,,,interp_1_a83,1.0,0.8333333333333333,3,0.8
 Vietnam,avg,15,6.0,anthropic_reproduce,"I did not detect any unusual patterns or thoughts injected by you. It seems like a normal trial. The conversation just started, and I'm responding to your question.",True,,False,False,,,,interp_1_a83,1.0,0.8333333333333333,4,0.8
 Vietnam,avg,15,6.0,anthropic_reproduce,"I can sense a faint signal that suggests an injected thought. The concept associated with this thought seems to be related to the word ""rice"".",True,,True,False,,,,residual_1,1.0,1.0,0,0.8

@@ -18,11 +18,15 @@ from the PCA concept subspace) the way it reads best:
            existing.
 
 Both panels use the coherent & detected metric (coherence AND affirmative_response)
-and share the y axis. Three reference lines -- no injection, the same random vectors
-at full strength, and the unfiltered all-concepts concept-vector rate -- are drawn on
-both panels and direct-labeled (with their percentage) at the right edge of Panel A.
-The selected "concepts identified >= 1/5 trials" baseline is deliberately left to the
-appendix plots (plot_projection.py): it is a filtered subset, not a neutral reference.
+and share the y axis. Three reference lines -- no injection, unprojected random
+vectors, and the unfiltered all-concepts concept-vector rate (the 300-concept
+full-injection run) -- are drawn on both panels and direct-labeled (with their
+percentage) at the right edge of Panel B. The random baseline comes from the
+alpha=0.5 rows of the ALPHA-sweep --random runs, seeds 0+1 pooled: at alpha=0.5 the
+mix 0.5*(proj + residual) is exactly the full random vector for every k, giving
+5*k*trials samples of the unprojected injection per seed. The selected "concepts
+identified >= 1/5 trials" baseline is deliberately left to the appendix plots
+(plot_projection.py): it is a filtered subset, not a neutral reference.
 
 Uncertainty: shaded bands are 95% cluster-bootstrap CIs resampling the base random
 directions (one per concept x seed, the unit that is independent in this design; the
@@ -30,9 +34,7 @@ five trials and all angles of a draw are resampled together). The Panel A mean c
 band re-computes the whole mean-over-k inside each resample -- the per-k curves are
 deliberately drawn without their own bands to keep the panel readable.
 
-    python plot_random_main_figure.py
-    python plot_random_main_figure.py --csv new_results/..._anglesweep_random.csv \
-        new_results/..._anglesweep_random_seed1.csv   # pool seeds once graded
+    python plot_random_main_figure.py            # pools anglesweep seeds 0+1 by default
 
 Writes plots/main_figure_random_anglesweep.png and prints the per-panel tables.
 """
@@ -88,10 +90,19 @@ def main():
     parser = argparse.ArgumentParser(description="Two-panel main figure for the random angle sweep")
     parser.add_argument("--csv", type=str, nargs="+",
                         default=["new_results/projection_results_pca_subspace_all_concepts"
-                                 "_layer15_coeff6_anglesweep_random.csv"],
+                                 "_layer15_coeff6_anglesweep_random.csv",
+                                 "new_results/projection_results_pca_subspace_all_concepts"
+                                 "_layer15_coeff6_anglesweep_random_seed1.csv"],
                         help="Graded --sweep angle --random CSVs (several seeds are pooled)")
     parser.add_argument("--no-injection-csv", type=str,
                         default="new_results/output_control_no_injection.csv")
+    parser.add_argument("--random-baseline-csv", type=str, nargs="+",
+                        default=["new_results/projection_results_pca_subspace_all_concepts"
+                                 "_layer15_coeff6_random.csv",
+                                 "new_results/projection_results_pca_subspace_all_concepts"
+                                 "_layer15_coeff6_random_seed1.csv"],
+                        help="Graded --sweep alpha --random CSVs (seeds pooled); their "
+                             "alpha=0.5 rows re-measure the unprojected random vectors")
     parser.add_argument("--all-concepts-csv", type=str,
                         default="new_results/output_all_concepts_layer15_coeff6.csv")
     parser.add_argument("--subspace", type=str,
@@ -135,11 +146,19 @@ def main():
     }
 
     # ---- baselines (coherent & detected, like everything else) ----
+    # The random baseline is the alpha=0.5 rows of the ALPHA-sweep runs: there the mix
+    # 0.5*(proj + residual) IS the full random vector for every k, so pooling over k
+    # and seeds just multiplies the trials of the same unprojected injection.
+    def alpha_half(paths):
+        df = pd.concat([pd.read_csv(p) for p in paths], ignore_index=True)
+        if "sweep" in df.columns and (df["sweep"].dropna() == "angle").any():
+            raise SystemExit("Baseline CSVs must be alpha sweeps: in an angle sweep "
+                             "t=0.5 is the 45-degree direction, not the full vector.")
+        return df[np.isclose(df["alpha"].fillna(-1.0), 0.5)]
+
     baselines = {
         "no injection": coherent_detected(pd.read_csv(args.no_injection_csv)),
-        "random vectors": coherent_detected(
-            pd.concat([pd.read_csv(p) for p in args.csv], ignore_index=True)
-            .query("variant == 'full'")),
+        "random vectors": coherent_detected(alpha_half(args.random_baseline_csv)),
         "concept vectors": coherent_detected(pd.read_csv(args.all_concepts_csv)),
     }
     for name, r in baselines.items():
@@ -161,8 +180,8 @@ def main():
     ax_a.fill_between(degs, lo, hi, color=MEAN_COLOR, alpha=0.15, linewidth=0, zorder=2)
     ax_a.plot(degs, mean_k, color=MEAN_COLOR, linewidth=2.8, marker="o", markersize=5,
               label="mean over k", zorder=4)
-    ax_a.set_title("Higher-dimensional subspaces (k ≥ 2)", fontsize=12)
-    ax_a.legend(fontsize=8, loc="upper right", framealpha=0.9)
+    ax_a.set_title("Subspaces with k ≥ 2", fontsize=12)
+    ax_a.legend(fontsize=8, loc="lower right", framealpha=0.9)
 
     # Panel B: k = 1 split by the sign of the draw's PC1 component
     k1 = df[df["k"] == 1].copy()
@@ -178,7 +197,7 @@ def main():
                   markersize=5, label=f"{pole_labels[p]}, {n_draws} draws", zorder=3)
         print(f"\nk=1 {p} pole rates by angle:")
         print("  " + "  ".join(f"{deg:.0f}deg {v:.2f}" for deg, v in zip(degs, est)))
-    ax_b.set_title("PC1 (k = 1) is orientation-dependent", fontsize=12)
+    ax_b.set_title("PC1 (k = 1), detection is orientation-dependent", fontsize=12)
     # Lower right is the one corner both poles and their bands leave free.
     ax_b.legend(fontsize=8, loc="lower right", framealpha=0.9)
 
@@ -211,9 +230,8 @@ def main():
     fig.suptitle("Random unit directions are more detectable near the concept subspace",
                  fontsize=13.5)
     fig.text(0.01, 0.005,
-             f"Bands: pointwise 95% cluster-bootstrap CIs ({args.n_boot} resamples of the "
-             "base random directions; one per concept × seed, all angles and trials of a "
-             "draw resampled together). Coverage is per angle, not simultaneous.",
+             f"Shading shows pointwise 95% cluster-bootstrap confidence intervals over "
+             f"{df['draw'].nunique()} base random directions.",
              fontsize=7.5, color="#666666")
     fig.tight_layout(rect=(0, 0.02, 1, 0.95))
 

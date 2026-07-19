@@ -57,8 +57,8 @@ COEFF_COLORS = ['#0072B2', '#E69F00', '#009E73', '#D55E00', '#CC79A7', '#56B4E9'
 # One (linestyle, marker, label) per judge, so a judge looks the same at every coeff:
 # detection solid, coherence dashed. Marker shape doubles the linestyle cue.
 JUDGE_STYLES = {
-    'affirmative_response': ('-', 'o', 'detected (affirmative)'),
-    'coherence': ('--', 's', 'coherent'),
+    'affirmative_response': ('-', 'o', 'Injection reported'),
+    'coherence': ('--', 's', 'Coherent response'),
     'affirmative_response_followed_by_correct_identification': ('-.', '^', 'correctly identified'),
     'thinking_about_word': (':', 'D', 'thinking about word'),
 }
@@ -93,7 +93,7 @@ def make_plot(df, judges, run_label, plots_dir=Path('plots')):
                             linestyle=JUDGE_STYLES.get(j, ('-', 'o', j))[0],
                             marker=JUDGE_STYLES.get(j, ('-', 'o', j))[1],
                             label=JUDGE_STYLES.get(j, ('-', 'o', j))[2]) for j in judges]
-    coeff_legend = ax.legend(handles=coeff_handles, title='injection coeff', fontsize=9,
+    coeff_legend = ax.legend(handles=coeff_handles, title='Injection coefficient', fontsize=9,
                              loc='lower left', framealpha=0.9)
     ax.add_artist(coeff_legend)
     ax.legend(handles=judge_handles, title='judge', fontsize=9, loc='lower right',
@@ -103,8 +103,9 @@ def make_plot(df, judges, run_label, plots_dir=Path('plots')):
     experiment_type = df['type'].iloc[0] if 'type' in df else '?'
     ax.set_xlabel('Layer', fontsize=11)
     ax.set_ylabel('Rate (mean over concepts x trials)', fontsize=11)
-    ax.set_title(f'{run_label} (type={experiment_type}, temp={temperature}, n={per_cell_n}/cell)',
-                 fontsize=12)
+    ax.set_title('Configuration sweep for coherent injection detection', fontsize=12)
+    # Run details stay out of the figure; printed for use in captions
+    print(f"Run: {run_label} (type={experiment_type}, temp={temperature}, n={per_cell_n}/cell)")
     if len(layers) == 1:
         ax.set_xlim(layers[0] - 1, layers[0] + 1)
     ax.set_xticks(layers)
